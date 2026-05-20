@@ -1,0 +1,112 @@
+<div class="row">
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-16">
+          <div class="bg-light-error rounded p-16">
+            <i-tabler name="shield-lock" class="icon-48 text-error"></i-tabler>
+          </div>
+          <div>
+            <h4 class="mat-headline-6 f-w-600 m-0">Admin Panel</h4>
+            <p class="mat-body-1 text-muted m-0">Gestionare utilizatori MediLink</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Statistici -->
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <h2 class="mat-headline-5 f-w-700 text-primary">{{ users.length }}</h2>
+        <p class="mat-body-2 text-muted">Total utilizatori</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <h2 class="mat-headline-5 f-w-700 text-success">{{ activeUsers }}</h2>
+        <p class="mat-body-2 text-muted">Utilizatori activi</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <h2 class="mat-headline-5 f-w-700 text-primary">{{ doctorCount }}</h2>
+        <p class="mat-body-2 text-muted">Doctori</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <h2 class="mat-headline-5 f-w-700 text-warning">{{ patientCount }}</h2>
+        <p class="mat-body-2 text-muted">Pacienți</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tabel utilizatori -->
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16">
+        <mat-card-title>Utilizatori</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <app-skeleton *ngIf="loading" [rows]="5" [card]="false" [title]="false" class="p-16 d-block"></app-skeleton>
+
+        <table mat-table [dataSource]="users" *ngIf="!loading" class="w-100">
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="full_name">
+            <th mat-header-cell *matHeaderCellDef>Nume</th>
+            <td mat-cell *matCellDef="let u">{{ (u.first_name || u.last_name) ? u.first_name + ' ' + u.last_name : '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Rol</th>
+            <td mat-cell *matCellDef="let u">
+              <mat-chip [color]="getRoleColor(u.role)" highlighted>{{ u.role | titlecase }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="is_active">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let u">
+              <mat-chip [color]="u.is_active ? 'primary' : 'warn'" highlighted>
+                {{ u.is_active ? 'Activ' : 'Inactiv' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="created_at">
+            <th mat-header-cell *matHeaderCellDef>Creat la</th>
+            <td mat-cell *matCellDef="let u">{{ u.created_at | date:'dd.MM.yyyy' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acțiuni</th>
+            <td mat-cell *matCellDef="let u">
+              <button mat-icon-button [color]="u.is_active ? 'warn' : 'primary'" (click)="toggleActive(u)"
+                [matTooltip]="u.is_active ? 'Dezactivează' : 'Activează'">
+                <i-tabler [name]="u.is_active ? 'user-off' : 'user-check'"></i-tabler>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

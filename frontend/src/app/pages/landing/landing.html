@@ -1,0 +1,152 @@
+<div class="landing-page">
+
+  <!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+  <nav class="landing-nav">
+    <div class="landing-container d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-8">
+        <div class="brand-heart">
+          <i-tabler name="heart-rate-monitor" style="width:28px;height:28px;color:#1976d2"></i-tabler>
+        </div>
+        <span class="brand-name">MediLink</span>
+      </div>
+      <div class="d-flex gap-8 align-items-center">
+        <a mat-button routerLink="/authentication/login" class="nav-link">Intră în cont</a>
+        <a mat-flat-button color="primary" routerLink="/authentication/register">
+          Înregistrează-te
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ───────────────────────────────────────────────────────────── -->
+  <section class="hero-section">
+    <div class="landing-container text-center">
+      <div class="hero-badge m-b-24">
+        <i-tabler name="shield-check" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i-tabler>
+        Platformă medicală securizată · Proiect licență 2026
+      </div>
+
+      <h1 class="hero-title">
+        Sănătatea ta,<br>
+        gestionată <span class="hero-accent">inteligent</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        MediLink conectează pacienți, doctori și asistenți medicali
+        într-o platformă unificată, securizată și conformă cu GDPR.
+      </p>
+
+      <div class="d-flex gap-16 justify-content-center flex-wrap">
+        <a mat-flat-button color="primary" routerLink="/authentication/login"
+           class="hero-btn-primary">
+          <i-tabler name="login" style="width:20px;height:20px;margin-right:8px;vertical-align:middle"></i-tabler>
+          Intră în cont
+        </a>
+        <a mat-stroked-button routerLink="/authentication/register"
+           class="hero-btn-secondary">
+          Creează cont gratuit
+        </a>
+      </div>
+
+      <!-- Demo credentials hint -->
+      <div class="demo-hint m-t-32">
+        <span class="demo-label">Demo:</span>
+        <code>admin@medilink.com</code> ·
+        <code>doctor@medilink.com</code> ·
+        <code>pacient@medilink.com</code>
+        <span class="text-muted"> / parolele din documentație</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ───────────────────────────────────────────────────────── -->
+  <section class="features-section">
+    <div class="landing-container">
+      <h2 class="section-title text-center">Funcționalități principale</h2>
+      <p class="section-subtitle text-center text-muted">
+        Proiectat pentru toate rolurile din ecosistemul medical
+      </p>
+
+      <div class="features-grid">
+        <div *ngFor="let f of features" class="feature-card">
+          <div class="feature-icon" [style.background]="f.bg">
+            <i-tabler [name]="f.icon" [style.color]="f.color" style="width:28px;height:28px"></i-tabler>
+          </div>
+          <h4 class="feature-title">{{ f.title }}</h4>
+          <p class="feature-desc text-muted">{{ f.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Roluri ──────────────────────────────────────────────────────────── -->
+  <section class="roles-section">
+    <div class="landing-container">
+      <h2 class="section-title text-center">Acces pentru fiecare rol</h2>
+
+      <div class="roles-grid">
+        <div *ngFor="let r of roles" class="role-card">
+          <div class="role-icon" [style.background]="r.color + '1a'">
+            <i-tabler [name]="r.icon" [style.color]="r.color" style="width:32px;height:32px"></i-tabler>
+          </div>
+          <h5 class="role-label" [style.color]="r.color">{{ r.label }}</h5>
+          <p class="role-desc text-muted">{{ r.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats ───────────────────────────────────────────────────────────── -->
+  <section class="stats-section">
+    <div class="landing-container">
+      <div class="stats-grid">
+        <div *ngFor="let s of stats" class="stat-item text-center">
+          <div class="stat-value">{{ s.value }}</div>
+          <div class="stat-label text-muted">{{ s.label }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How it works ────────────────────────────────────────────────────── -->
+  <section class="steps-section">
+    <div class="landing-container">
+      <h2 class="section-title text-center">Cum funcționează</h2>
+      <div class="steps-grid">
+        <div class="step-item text-center">
+          <div class="step-number">1</div>
+          <h5 class="step-title">Înregistrare</h5>
+          <p class="text-muted">Creezi un cont în câteva secunde și alegi rolul tău în sistem.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-item text-center">
+          <div class="step-number">2</div>
+          <h5 class="step-title">Programare</h5>
+          <p class="text-muted">Selectezi doctorul, data și ora. Doctorul primește notificare instant.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-item text-center">
+          <div class="step-number">3</div>
+          <h5 class="step-title">Consultație</h5>
+          <p class="text-muted">Fișa medicală completată de doctor. Tu o poți exporta oricând (GDPR).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="landing-footer">
+    <div class="landing-container d-flex align-items-center justify-content-between flex-wrap gap-16">
+      <div class="d-flex align-items-center gap-8">
+        <i-tabler name="heart-rate-monitor" style="width:20px;height:20px;color:#1976d2"></i-tabler>
+        <span class="f-w-600">MediLink</span>
+        <span class="text-muted">— o platformă medicală digitală</span>
+      </div>
+      <div class="d-flex gap-16">
+        <a mat-button routerLink="/authentication/login" class="text-muted f-s-13">Login</a>
+        <a mat-button routerLink="/authentication/register" class="text-muted f-s-13">Register</a>
+      </div>
+    </div>
+  </footer>
+
+</div>

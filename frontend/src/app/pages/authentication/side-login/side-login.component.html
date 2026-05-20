@@ -1,0 +1,88 @@
+<div class="blank-layout-container justify-content-center align-items-center bg-light">
+  <div class="position-relative row w-100 h-100 bg-gredient justify-content-center">
+    <div class="col-lg-4 d-flex align-items-center">
+      <mat-card class="cardWithShadow boxed-auth">
+        <mat-card-content class="p-32">
+
+          <div class="text-center m-b-8">
+            <span style="font-size: 32px; font-weight: 700; color: var(--mat-sys-primary);">🏥 MediLink</span>
+            <p class="mat-body-2 text-muted m-t-4">o platformă medicală digitală</p>
+          </div>
+
+          <!-- ── Step 1: Credentials ── -->
+          <ng-container *ngIf="step === 'credentials'">
+            <div class="or-border m-t-16">Autentificare</div>
+            <form [formGroup]="form" (ngSubmit)="submit()" class="m-t-30">
+              <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Email</mat-label>
+              <mat-form-field appearance="outline" class="w-100" color="primary">
+                <input matInput formControlName="uname" placeholder="email@exemplu.com" />
+                <mat-error *ngIf="f['uname'].hasError('required')">Email este obligatoriu</mat-error>
+                <mat-error *ngIf="f['uname'].hasError('email')">Email invalid</mat-error>
+              </mat-form-field>
+
+              <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Parolă</mat-label>
+              <mat-form-field appearance="outline" class="w-100" color="primary">
+                <input matInput type="password" formControlName="password" placeholder="••••••••" />
+                <mat-error *ngIf="f['password'].hasError('required')">Parola este obligatorie</mat-error>
+              </mat-form-field>
+
+              <div *ngIf="errorMessage" class="mat-error m-b-12">{{ errorMessage }}</div>
+
+              <button mat-flat-button color="primary" class="w-100" type="submit" [disabled]="loading">
+                {{ loading ? 'Se încarcă...' : 'Autentificare' }}
+              </button>
+            </form>
+          </ng-container>
+
+          <!-- ── Step 2: TOTP code ── -->
+          <ng-container *ngIf="step === 'mfa'">
+            <div class="or-border m-t-16">Verificare în 2 pași</div>
+
+            <div class="m-t-24 text-center">
+              <div style="width:64px;height:64px;border-radius:16px;background:#eff6ff;
+                          display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <i-tabler name="shield-lock" style="width:32px;height:32px;color:#2563eb;"></i-tabler>
+              </div>
+              <p style="margin:0 0 8px;font-size:.95rem;font-weight:700;color:#1e293b;">
+                Cod de autentificare
+              </p>
+              <p style="margin:0 0 24px;font-size:.83rem;color:#64748b;">
+                Introdu codul de 6 cifre din aplicația de autentificare (Google Authenticator, Authy etc.)
+              </p>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100" color="primary">
+              <mat-label>Cod TOTP (6 cifre)</mat-label>
+              <input matInput
+                     [(ngModel)]="mfaCode"
+                     placeholder="000000"
+                     maxlength="6"
+                     inputmode="numeric"
+                     pattern="[0-9]*"
+                     style="font-size:1.4rem;letter-spacing:.3em;text-align:center;"
+                     (keydown.enter)="submitMfa()">
+            </mat-form-field>
+
+            <div *ngIf="errorMessage"
+                 style="color:#dc2626;font-size:.83rem;margin-bottom:12px;text-align:center;">
+              {{ errorMessage }}
+            </div>
+
+            <button mat-flat-button color="primary" class="w-100 m-b-12"
+                    (click)="submitMfa()"
+                    [disabled]="loading || mfaCode.length !== 6">
+              <i-tabler *ngIf="!loading" name="shield-check" style="width:16px;height:16px;margin-right:6px;"></i-tabler>
+              <mat-spinner *ngIf="loading" diameter="16" style="display:inline-block;margin-right:8px;"></mat-spinner>
+              {{ loading ? 'Se verifică...' : 'Verifică codul' }}
+            </button>
+
+            <button mat-stroked-button class="w-100" (click)="backToCredentials()">
+              ← Înapoi la login
+            </button>
+          </ng-container>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

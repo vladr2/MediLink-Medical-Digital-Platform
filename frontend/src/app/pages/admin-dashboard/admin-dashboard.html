@@ -1,0 +1,365 @@
+<div class="row">
+  <!-- Header -->
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-16">
+          <div class="d-flex align-items-center gap-16">
+            <div class="bg-light-error rounded p-16">
+              <i-tabler name="shield-lock" class="icon-48 text-error"></i-tabler>
+            </div>
+            <div>
+              <h4 class="mat-headline-6 f-w-600 m-0">Bun venit, {{ (currentUser?.first_name || currentUser?.last_name) ? currentUser?.first_name + ' ' + currentUser?.last_name : currentUser?.email }}</h4>
+              <p class="mat-body-1 text-muted m-0">Administrator MediLink</p>
+            </div>
+          </div>
+          <div class="d-flex gap-8 flex-wrap">
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Statistici utilizatori -->
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="users" class="icon-36 text-primary m-b-8"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700 text-primary">{{ totalUsers }}</h2>
+        <p class="mat-body-2 text-muted">Total utilizatori</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="stethoscope" class="icon-36 text-success m-b-8"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700 text-success">{{ doctorCount }}</h2>
+        <p class="mat-body-2 text-muted">Doctori</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="user-heart" class="icon-36 text-warning m-b-8"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700 text-warning">{{ patientCount }}</h2>
+        <p class="mat-body-2 text-muted">Pacienți</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow cursor-pointer" (click)="navigate('/dashboard/appointments')">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="calendar" class="icon-36 text-error m-b-8"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700 text-error">{{ totalAppointments }}</h2>
+        <p class="mat-body-2 text-muted">Programări totale</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Feature 4: Stat cards suplimentare -->
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="calendar-month" class="icon-36 m-b-8" style="color:#2563eb;"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700" style="color:#2563eb;">{{ appointmentsThisMonth }}</h2>
+        <p class="mat-body-2 text-muted">Programări luna aceasta</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="chart-pie" class="icon-36 m-b-8" style="color:#d32f2f;"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700" style="color:#d32f2f;">{{ cancellationRate }}%</h2>
+        <p class="mat-body-2 text-muted">Rată anulări</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="check-circle" class="icon-36 m-b-8" style="color:#388e3c;"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700" style="color:#388e3c;">{{ completedAppointments }}</h2>
+        <p class="mat-body-2 text-muted">Finalizate total</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24 text-center">
+        <i-tabler name="stethoscope" class="icon-36 m-b-8" style="color:#7b1fa2;"></i-tabler>
+        <h2 class="mat-headline-5 f-w-700" style="color:#7b1fa2;">{{ avgAppointmentsPerDoctor }}</h2>
+        <p class="mat-body-2 text-muted">Medie programări/doctor</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Grafic programări pe lună -->
+  <div class="col-lg-8 m-b-24">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-header class="p-16">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:9px;background:#eff6ff;display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="chart-bar" style="color:#2563eb;width:18px;height:18px;"></i-tabler>
+          </div>
+          <div>
+            <mat-card-title style="margin:0;font-size:1rem;">Programări pe lună</mat-card-title>
+            <p style="margin:0;font-size:.75rem;color:#64748b;">Ultimele 6 luni</p>
+          </div>
+        </div>
+      </mat-card-header>
+      <mat-card-content class="p-8">
+        <apx-chart *ngIf="appointmentsByMonthChart.series"
+          [series]="appointmentsByMonthChart.series"
+          [chart]="appointmentsByMonthChart.chart"
+          [xaxis]="appointmentsByMonthChart.xaxis"
+          [plotOptions]="appointmentsByMonthChart.plotOptions"
+          [dataLabels]="appointmentsByMonthChart.dataLabels"
+          [colors]="appointmentsByMonthChart.colors"
+          [tooltip]="appointmentsByMonthChart.tooltip"
+          [yaxis]="appointmentsByMonthChart.yaxis">
+        </apx-chart>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Grafic programări după status (Donut) -->
+  <div class="col-lg-4 m-b-24">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-header class="p-16">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:9px;background:#fff7ed;display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="chart-donut" style="color:#fb8c00;width:18px;height:18px;"></i-tabler>
+          </div>
+          <mat-card-title style="margin:0;font-size:1rem;">Status programări</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content class="p-8">
+        <apx-chart *ngIf="totalAppointments > 0 && appointmentDonutChart.series"
+          [series]="appointmentDonutChart.series"
+          [chart]="appointmentDonutChart.chart"
+          [labels]="appointmentDonutChart.labels"
+          [legend]="appointmentDonutChart.legend"
+          [colors]="appointmentDonutChart.colors"
+          [responsive]="appointmentDonutChart.responsive">
+        </apx-chart>
+        <div *ngIf="totalAppointments === 0" class="text-center p-24">
+          <p class="mat-body-2 text-muted">Nicio programare înregistrată</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Top 5 doctori activi -->
+  <div class="col-lg-6 m-b-24">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-header class="p-16">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:9px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="trophy" style="color:#0d9488;width:18px;height:18px;"></i-tabler>
+          </div>
+          <div>
+            <mat-card-title style="margin:0;font-size:1rem;">Top 5 doctori activi</mat-card-title>
+            <p style="margin:0;font-size:.75rem;color:#64748b;">după numărul de programări</p>
+          </div>
+        </div>
+      </mat-card-header>
+      <mat-card-content class="p-8">
+        <apx-chart *ngIf="topDoctorsChart.series"
+          [series]="topDoctorsChart.series"
+          [chart]="topDoctorsChart.chart"
+          [xaxis]="topDoctorsChart.xaxis"
+          [plotOptions]="topDoctorsChart.plotOptions"
+          [dataLabels]="topDoctorsChart.dataLabels"
+          [colors]="topDoctorsChart.colors"
+          [tooltip]="topDoctorsChart.tooltip"
+          [yaxis]="topDoctorsChart.yaxis">
+        </apx-chart>
+        <div *ngIf="!topDoctorsChart.series" class="text-center p-24">
+          <p class="mat-body-2 text-muted">Nu există date suficiente</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Grafic utilizatori după rol (Bar) -->
+  <div class="col-lg-6 m-b-24">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-header class="p-16">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:9px;background:#faf5ff;display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="users" style="color:#7b1fa2;width:18px;height:18px;"></i-tabler>
+          </div>
+          <mat-card-title style="margin:0;font-size:1rem;">Distribuție utilizatori pe roluri</mat-card-title>
+        </div>
+      </mat-card-header>
+      <mat-card-content class="p-8">
+        <apx-chart *ngIf="usersLoaded && userRolesBarChart.series"
+          [series]="userRolesBarChart.series"
+          [chart]="userRolesBarChart.chart"
+          [xaxis]="userRolesBarChart.xaxis"
+          [plotOptions]="userRolesBarChart.plotOptions"
+          [dataLabels]="userRolesBarChart.dataLabels"
+          [colors]="userRolesBarChart.colors"
+          [tooltip]="userRolesBarChart.tooltip">
+        </apx-chart>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tabel utilizatori -->
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16 d-flex align-items-center justify-content-between">
+        <mat-card-title>Utilizatori</mat-card-title>
+        <button mat-flat-button color="primary" (click)="openCreateDialog()">
+          <i-tabler name="user-plus" class="m-r-8"></i-tabler>
+          Adaugă utilizator
+        </button>
+      </mat-card-header>
+
+      <div class="d-flex gap-12 p-x-16 p-y-8 align-items-center flex-wrap">
+        <mat-form-field appearance="outline" class="flex-1-auto">
+          <mat-label>Caută utilizator</mat-label>
+          <input matInput (input)="filterUsers($event)" placeholder="Nume sau email..." />
+          <i-tabler name="search" matSuffix></i-tabler>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="width: 160px;">
+          <mat-label>Rol</mat-label>
+          <mat-select (selectionChange)="filterByRole($event.value)" value="all">
+            <mat-option value="all">Toți</mat-option>
+            <mat-option value="patient">Pacienți</mat-option>
+            <mat-option value="doctor">Doctori</mat-option>
+            <mat-option value="assistant">Asistenți</mat-option>
+            <mat-option value="admin">Admini</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="width: 160px;">
+          <mat-label>De la data</mat-label>
+          <input matInput type="date" (change)="filterByDate('from', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="width: 160px;">
+          <mat-label>Până la data</mat-label>
+          <input matInput type="date" (change)="filterByDate('to', $event)" />
+        </mat-form-field>
+      </div>
+
+      <mat-card-content>
+        <app-skeleton *ngIf="loading" [rows]="5" [card]="false" [title]="false" class="p-16 d-block"></app-skeleton>
+
+        <table mat-table [dataSource]="usersDataSource" matSort [hidden]="loading" class="w-100">
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+            <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="full_name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Nume</th>
+            <td mat-cell *matCellDef="let u">{{ (u.first_name || u.last_name) ? u.first_name + ' ' + u.last_name : '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Rol</th>
+            <td mat-cell *matCellDef="let u">
+              <mat-chip [color]="getRoleColor(u.role)" highlighted>{{ u.role | titlecase }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="is_active">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let u">
+              <mat-chip [color]="u.is_active ? 'primary' : 'warn'" highlighted>
+                {{ u.is_active ? 'Activ' : 'Inactiv' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="created_at">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Creat la</th>
+            <td mat-cell *matCellDef="let u">{{ u.created_at | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acțiuni</th>
+            <td mat-cell *matCellDef="let u">
+              <button mat-icon-button [color]="u.is_active ? 'warn' : 'primary'" (click)="toggleActive(u)"
+                [matTooltip]="u.is_active ? 'Dezactivează' : 'Activează'">
+                <i-tabler [name]="u.is_active ? 'user-off' : 'user-check'"></i-tabler>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <mat-paginator [pageSizeOptions]="[5, 10, 25]" pageSize="5" showFirstLastButtons></mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Audit Log -->
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16 d-flex align-items-center justify-content-between">
+        <mat-card-title>Audit Log</mat-card-title>
+        <button mat-stroked-button color="primary" (click)="exportAuditLog()">
+          <i-tabler name="download" class="m-r-8"></i-tabler>
+          Exportă CSV
+        </button>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <app-skeleton *ngIf="loadingAudit" [rows]="4" [card]="false" [title]="false" class="p-16 d-block"></app-skeleton>
+
+        <table mat-table [dataSource]="recentAuditLogs" *ngIf="!loadingAudit" class="w-100">
+          <ng-container matColumnDef="created_at">
+            <th mat-header-cell *matHeaderCellDef>Data</th>
+            <td mat-cell *matCellDef="let l">{{ l.created_at | date:'dd.MM.yyyy HH:mm:ss' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="user_email">
+            <th mat-header-cell *matHeaderCellDef>Utilizator</th>
+            <td mat-cell *matCellDef="let l">{{ l.user_email || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef>Acțiune</th>
+            <td mat-cell *matCellDef="let l">
+              <mat-chip color="primary" highlighted>{{ l.action }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="details">
+            <th mat-header-cell *matHeaderCellDef>Detalii</th>
+            <td mat-cell *matCellDef="let l">{{ l.details || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="ip_address">
+            <th mat-header-cell *matHeaderCellDef>IP</th>
+            <td mat-cell *matCellDef="let l">{{ l.ip_address || '-' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="auditColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: auditColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="p-16 text-center" *ngIf="auditLogs.length > 10">
+    <button mat-stroked-button color="primary" (click)="openAuditDialog()">
+      Vezi toate înregistrările ({{ auditLogs.length }})
+    </button>
+  </div>
+</div>

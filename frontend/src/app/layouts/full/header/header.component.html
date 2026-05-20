@@ -1,0 +1,218 @@
+<mat-toolbar class="topbar gap-8" style="position:relative;">
+  <!-- Progress bar navigare — ca YouTube -->
+  <mat-progress-bar
+    *ngIf="navigating"
+    mode="indeterminate"
+    color="primary"
+    style="position:absolute;bottom:0;left:0;right:0;height:3px;z-index:10;">
+  </mat-progress-bar>
+  @if(!showToggle) {
+  <button mat-icon-button (click)="toggleMobileNav.emit()" class="d-flex justify-content-center">
+    <i class="iconify icon-20 d-flex" data-icon="solar:hamburger-menu-line-duotone"></i>
+  </button>
+  }
+
+  <span class="flex-1-auto"></span>
+
+  <div class="d-flex align-items-center gap-8" *ngIf="currentUser">
+    <span class="mat-body-2 text-muted">
+      {{ (currentUser.first_name || currentUser.last_name)
+          ? currentUser.first_name + ' ' + currentUser.last_name
+          : currentUser.email }}
+    </span>
+    <mat-chip>{{ currentUser.role | titlecase }}</mat-chip>
+  </div>
+
+  <!-- ── Global search (Feature 13) ───────────────────────────────────────── -->
+  <div class="ml-search-container" style="position:relative;">
+    <div style="display:flex;align-items:center;background:#f8fafc;border:1.5px solid #e2e8f0;
+                border-radius:10px;padding:6px 12px;gap:8px;min-width:220px;max-width:320px;
+                transition:border-color .2s;"
+         [style.border-color]="showSearchDropdown ? '#2563eb' : '#e2e8f0'">
+      <i-tabler name="search" style="width:16px;height:16px;color:#94a3b8;flex-shrink:0;"></i-tabler>
+      <input
+        [value]="searchQuery"
+        (input)="onSearchInput($any($event.target).value)"
+        (keydown.escape)="closeSearch()"
+        placeholder="Caută doctori, programări…"
+        style="border:none;outline:none;background:transparent;font-size:.84rem;
+               color:#334155;width:100%;min-width:0;"
+      >
+      <mat-spinner *ngIf="loadingSearch" diameter="14" style="flex-shrink:0;"></mat-spinner>
+      <i-tabler *ngIf="searchQuery && !loadingSearch" name="x"
+                style="width:14px;height:14px;color:#94a3b8;cursor:pointer;flex-shrink:0;"
+                (click)="closeSearch()"></i-tabler>
+    </div>
+
+    <!-- Dropdown rezultate -->
+    <div *ngIf="showSearchDropdown"
+         style="position:absolute;top:calc(100% + 6px);left:0;width:360px;max-width:90vw;
+                background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.14);
+                border:1px solid #e2e8f0;z-index:9999;overflow:hidden;">
+
+      <!-- Doctori -->
+      <div *ngIf="searchResults?.doctors?.length">
+        <div style="padding:8px 14px 4px;font-size:.7rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.5px;color:#94a3b8;">Doctori</div>
+        <div *ngFor="let d of searchResults!.doctors"
+             class="ml-search-result-row"
+             style="display:flex;align-items:center;gap:10px;padding:9px 14px;"
+             (click)="navigateToResult('doctor', d)">
+          <div style="width:32px;height:32px;border-radius:8px;background:#eff6ff;flex-shrink:0;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="stethoscope" style="width:15px;height:15px;color:#2563eb;"></i-tabler>
+          </div>
+          <div style="min-width:0;">
+            <p style="margin:0;font-size:.85rem;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Dr. {{ d.name }}</p>
+            <p style="margin:0;font-size:.75rem;color:#64748b;">{{ d.specialization }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pacienți (staff) -->
+      <div *ngIf="searchResults?.patients?.length">
+        <div style="padding:8px 14px 4px;font-size:.7rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.5px;color:#94a3b8;border-top:1px solid #f1f5f9;">Pacienți</div>
+        <div *ngFor="let p of searchResults!.patients"
+             class="ml-search-result-row"
+             style="display:flex;align-items:center;gap:10px;padding:9px 14px;"
+             (click)="navigateToResult('patient', p)">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0fdf4;flex-shrink:0;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="user-heart" style="width:15px;height:15px;color:#16a34a;"></i-tabler>
+          </div>
+          <div style="min-width:0;">
+            <p style="margin:0;font-size:.85rem;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.name }}</p>
+            <p style="margin:0;font-size:.75rem;color:#64748b;">{{ p.email }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Programări -->
+      <div *ngIf="searchResults?.appointments?.length">
+        <div style="padding:8px 14px 4px;font-size:.7rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.5px;color:#94a3b8;border-top:1px solid #f1f5f9;">Programări</div>
+        <div *ngFor="let a of searchResults!.appointments"
+             class="ml-search-result-row"
+             style="display:flex;align-items:center;gap:10px;padding:9px 14px;"
+             (click)="navigateToResult('appointment', a)">
+          <div style="width:32px;height:32px;border-radius:8px;background:#fff7ed;flex-shrink:0;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="calendar" style="width:15px;height:15px;color:#ea580c;"></i-tabler>
+          </div>
+          <div style="min-width:0;">
+            <p style="margin:0;font-size:.85rem;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ a.reason || '(fără motiv)' }}</p>
+            <p style="margin:0;font-size:.75rem;color:#64748b;">{{ a.datetime | date:'dd.MM.yyyy HH:mm' }} · {{ a.status }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- No results -->
+      <div *ngIf="!hasSearchResults"
+           style="padding:20px;text-align:center;color:#94a3b8;font-size:.85rem;">
+        <i-tabler name="search-off" style="width:24px;height:24px;display:block;margin:0 auto 6px;"></i-tabler>
+        Niciun rezultat pentru „{{ searchQuery }}"
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .ml-search-result-row { cursor: pointer; transition: background .15s; }
+    .ml-search-result-row:hover { background: #f8fafc; }
+  </style>
+
+  <!-- ── Dark mode toggle ──────────────────────────────────────── -->
+  <button mat-icon-button (click)="themeService.toggle()"
+          [matTooltip]="themeService.isDark ? 'Mod deschis' : 'Mod întunecat'"
+          class="d-flex align-items-center justify-content-center">
+    <i-tabler [name]="themeService.isDark ? 'sun' : 'moon'" class="icon-20"></i-tabler>
+  </button>
+
+  <!-- ── Bell icon cu badge notificări ─────────────────────────── -->
+  <button mat-icon-button [matMenuTriggerFor]="notifMenu"
+          class="d-flex align-items-center justify-content-center"
+          (menuOpened)="loadNotifications()"
+          [matBadge]="unreadCount > 0 ? unreadCount : null"
+          matBadgeColor="warn"
+          matBadgeSize="small">
+    <i-tabler name="bell" class="icon-20"></i-tabler>
+  </button>
+
+  <mat-menu #notifMenu="matMenu" class="notif-menu cardWithShadow" xPosition="before">
+    <!-- Header dropdown -->
+    <div class="notif-header d-flex align-items-center justify-content-between p-x-16 p-y-12"
+         (click)="$event.stopPropagation()">
+      <span class="mat-subtitle-2 f-w-600">Notificări</span>
+      <button mat-button color="primary" class="f-s-12 p-0"
+              *ngIf="unreadCount > 0" (click)="markAllAsRead()">
+        Marchează toate citite
+      </button>
+    </div>
+    <mat-divider></mat-divider>
+
+    <!-- Loading -->
+    <div *ngIf="loadingNotifications" class="p-16 text-center">
+      <mat-spinner diameter="24" class="mx-auto"></mat-spinner>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!loadingNotifications && notifications.length === 0"
+         class="p-24 text-center">
+      <i-tabler name="bell-off" class="icon-36 text-muted"></i-tabler>
+      <p class="mat-body-2 text-muted m-t-8 m-0">Nicio notificare</p>
+    </div>
+
+    <!-- Lista notificări -->
+    <ng-scrollbar *ngIf="!loadingNotifications && notifications.length > 0"
+                  style="height: 340px; width: 340px;">
+      <div *ngFor="let n of notifications"
+           class="notif-item d-flex gap-12 p-x-16 p-y-12"
+           [class.notif-unread]="!n.read"
+           (click)="markAsRead(n); $event.stopPropagation()">
+        <div class="notif-icon-wrap"
+             [class.notif-icon-appointment]="n.type === 'appointment'"
+             [class.notif-icon-info]="n.type === 'info'"
+             [class.notif-icon-warning]="n.type === 'warning'">
+          <i-tabler [name]="getNotificationIcon(n.type)" class="icon-18"></i-tabler>
+        </div>
+        <div class="flex-1" style="min-width:0">
+          <p class="mat-body-2 f-w-600 m-0 text-truncate">{{ n.title }}</p>
+          <p class="mat-caption text-muted m-0" style="white-space:normal;line-height:1.4">
+            {{ n.message }}
+          </p>
+          <p class="mat-caption text-muted m-0 m-t-4">{{ getTimeAgo(n.created_at) }}</p>
+        </div>
+        <div *ngIf="!n.read" class="notif-dot"></div>
+      </div>
+    </ng-scrollbar>
+  </mat-menu>
+
+  <!-- ── Avatar cu inițiale ─────────────────────────────────────── -->
+  <button mat-icon-button extended [matMenuTriggerFor]="profilemenu"
+    class="d-flex align-items-center justify-content-center profile-btn-dd">
+    <div class="user-avatar-initials"
+         [style.background-color]="getRoleColor()">
+      {{ getInitials() }}
+    </div>
+  </button>
+
+  <mat-menu #profilemenu="matMenu" class="topbar-dd cardWithShadow">
+    <div class="p-x-12 p-y-8" *ngIf="currentUser">
+      <p class="mat-subtitle-2 m-0">
+        {{ (currentUser.first_name || currentUser.last_name)
+            ? currentUser.first_name + ' ' + currentUser.last_name
+            : currentUser.email }}
+      </p>
+      <p class="mat-body-2 text-muted m-0">{{ currentUser.role | titlecase }}</p>
+    </div>
+    <mat-divider></mat-divider>
+    <button mat-menu-item [routerLink]="['/dashboard/profile']">
+      <mat-icon class="d-flex align-items-center">
+        <i data-icon="solar:user-line-duotone" class="iconify icon-22"></i>
+      </mat-icon>Profil
+    </button>
+    <div class="p-x-12 m-t-12">
+      <button mat-stroked-button class="w-100" (click)="logout()">Deconectare</button>
+    </div>
+  </mat-menu>
+</mat-toolbar>

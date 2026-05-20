@@ -1,0 +1,338 @@
+<style>
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Timeline */
+.ml-timeline { position: relative; padding-left: 32px; }
+.ml-timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #e2e8f0 0%, #e2e8f0 100%);
+}
+
+.ml-record-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  transition: box-shadow .2s, transform .2s;
+  cursor: pointer;
+}
+.ml-record-card:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+}
+
+/* Colored dot on timeline */
+.ml-record-dot {
+  position: absolute;
+  left: -27px;
+  top: 16px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #e2e8f0;
+}
+
+.ml-record-head {
+  padding: 12px 16px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ml-record-icon {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.ml-record-body { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+.ml-record-box {
+  padding: 9px 12px; border-radius: 8px;
+  font-size: .87rem; line-height: 1.5;
+}
+.ml-record-footer {
+  padding: 7px 16px 10px;
+  border-top: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between;
+}
+</style>
+
+<div class="row">
+
+  <!-- ── Top header card ─────────────────────────────────────────────────── -->
+  <div class="col-12 m-b-16">
+    <mat-card class="cardWithShadow">
+      <mat-card-content style="padding:18px 24px;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-12">
+
+          <!-- Left: title + stats -->
+          <div class="d-flex align-items-center gap-14" style="flex-wrap:wrap;">
+            <div style="width:46px;height:46px;border-radius:12px;
+                        background:linear-gradient(135deg,#2563eb,#3b82f6);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="notes-medical" style="color:#fff;width:22px;height:22px;"></i-tabler>
+            </div>
+            <div>
+              <h5 style="margin:0;font-size:1.1rem;font-weight:700;color:#1e293b;">Fișă Medicală</h5>
+              <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                {{ records.length }} înregistrări totale
+              </p>
+            </div>
+
+            <!-- Stats chips -->
+            <div class="d-flex gap-8" style="flex-wrap:wrap;margin-left:8px;">
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;
+                          background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;">
+                <i-tabler name="stethoscope" style="width:13px;height:13px;color:#2563eb;"></i-tabler>
+                <span style="font-size:.75rem;color:#1e40af;font-weight:600;">Consultații</span>
+                <span style="font-size:.8rem;font-weight:800;color:#2563eb;">{{ countConsultatie }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;
+                          background:#f0fdfa;border-radius:8px;border:1px solid #99f6e4;">
+                <i-tabler name="microscope" style="width:13px;height:13px;color:#0d9488;"></i-tabler>
+                <span style="font-size:.75rem;color:#134e4a;font-weight:600;">Analize</span>
+                <span style="font-size:.8rem;font-weight:800;color:#0d9488;">{{ countAnaliza }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;
+                          background:#fff7ed;border-radius:8px;border:1px solid #fed7aa;">
+                <i-tabler name="pill" style="width:13px;height:13px;color:#ea580c;"></i-tabler>
+                <span style="font-size:.75rem;color:#7c2d12;font-weight:600;">Tratamente</span>
+                <span style="font-size:.8rem;font-weight:800;color:#ea580c;">{{ countTratament }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: AI button -->
+          <button mat-flat-button color="primary"
+                  (click)="generateAISummary()"
+                  [disabled]="loadingAI || records.length === 0"
+                  style="border-radius:8px;">
+            <i-tabler [name]="loadingAI ? 'loader-2' : 'brain'"
+                      style="margin-right:6px;width:18px;height:18px;"
+                      [style.animation]="loadingAI ? 'spin 1s linear infinite' : 'none'"></i-tabler>
+            {{ loadingAI ? 'Se generează...' : 'Generează sumar AI' }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ── AI Summary card ──────────────────────────────────────────────────── -->
+  <div class="col-12 m-b-16" *ngIf="showAISummary">
+    <mat-card class="cardWithShadow" style="border-left:4px solid #2563eb;">
+      <mat-card-content style="padding:16px 20px;">
+        <div class="d-flex align-items-center justify-content-between m-b-12" style="flex-wrap:wrap;gap:8px;">
+          <div class="d-flex align-items-center gap-10">
+            <div style="width:34px;height:34px;border-radius:9px;background:#eff6ff;
+                        display:flex;align-items:center;justify-content:center;">
+              <i-tabler name="brain" style="width:17px;height:17px;color:#2563eb;"></i-tabler>
+            </div>
+            <div>
+              <p style="margin:0;font-size:.92rem;font-weight:700;color:#1e293b;">Sumar AI — Fișă Medicală</p>
+              <p style="margin:1px 0 0;font-size:.75rem;color:#64748b;" *ngIf="aiGeneratedAt">
+                Generat la {{ aiGeneratedAt | date:'dd.MM.yyyy HH:mm' }} · {{ aiRecordCount }} înregistrări
+              </p>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button mat-icon-button (click)="generateAISummary()" matTooltip="Regenerează" [disabled]="loadingAI">
+              <i-tabler name="refresh" style="width:17px;height:17px;"></i-tabler>
+            </button>
+            <button mat-icon-button (click)="showAISummary = false" matTooltip="Închide">
+              <i-tabler name="x" style="width:17px;height:17px;"></i-tabler>
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div *ngIf="loadingAI">
+          <div *ngFor="let w of [90, 75, 85, 60]"
+               [style.width]="w+'%'"
+               style="height:14px;border-radius:6px;background:#e2e8f0;margin-bottom:10px;
+                      animation:pulse 1.5s ease-in-out infinite;"></div>
+        </div>
+
+        <!-- Text -->
+        <div *ngIf="!loadingAI && aiSummary"
+             style="white-space:pre-wrap;line-height:1.75;font-size:.88rem;
+                    background:#f8fafc;border-radius:8px;padding:14px 16px;color:#334155;">
+          {{ aiSummary }}
+        </div>
+
+        <!-- Disclaimer -->
+        <div *ngIf="!loadingAI && aiSummary"
+             style="margin-top:10px;display:flex;align-items:flex-start;gap:8px;
+                    background:#fffbeb;border-radius:6px;padding:9px 12px;border:1px solid #fde68a;">
+          <i-tabler name="alert-triangle" style="width:15px;height:15px;color:#f59e0b;flex-shrink:0;margin-top:1px;"></i-tabler>
+          <span style="font-size:.76rem;color:#78350f;line-height:1.5;">
+            Sumarul este generat automat de AI și are rol informativ. Nu înlocuiește consultul medical.
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ── Timeline înregistrări ────────────────────────────────────────────── -->
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+      <mat-card-header style="padding:18px 24px 0;flex-direction:column;align-items:stretch;">
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="w-100 m-b-4" subscriptSizing="dynamic">
+          <mat-label>Caută în fișă…</mat-label>
+          <i-tabler matPrefix name="search" style="width:17px;height:17px;color:#94a3b8;margin-right:6px;"></i-tabler>
+          <input matInput [(ngModel)]="searchText" placeholder="diagnostic, tratament, analiză, note…">
+          <button *ngIf="searchText" matSuffix mat-icon-button (click)="searchText=''">
+            <i-tabler name="x" style="width:15px;height:15px;"></i-tabler>
+          </button>
+        </mat-form-field>
+      </mat-card-header>
+
+      <mat-card-content style="padding:16px 24px 24px;">
+
+        <!-- Loading -->
+        <app-skeleton *ngIf="loading" [rows]="4" [card]="false" [title]="true"></app-skeleton>
+
+        <!-- Empty -->
+        <div *ngIf="!loading && records.length === 0"
+             style="display:flex;flex-direction:column;align-items:center;padding:56px 24px;gap:14px;">
+          <div style="width:72px;height:72px;border-radius:18px;background:#eff6ff;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="file-off" style="width:34px;height:34px;color:#2563eb;opacity:.45;"></i-tabler>
+          </div>
+          <div style="text-align:center;">
+            <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Nicio înregistrare medicală</p>
+            <p style="margin:6px 0 0;font-size:.85rem;color:#64748b;">
+              Înregistrările vor apărea după consultații cu medicul.
+            </p>
+          </div>
+        </div>
+
+        <!-- No results -->
+        <div *ngIf="!loading && records.length > 0 && filtered.length === 0"
+             style="text-align:center;padding:36px;">
+          <i-tabler name="search-off" style="width:34px;height:34px;color:#94a3b8;"></i-tabler>
+          <p style="margin:8px 0 0;color:#64748b;">Niciun rezultat pentru „{{ searchText }}"</p>
+        </div>
+
+        <!-- Timeline -->
+        <div *ngIf="!loading && filtered.length > 0" class="ml-timeline">
+
+          <div *ngFor="let r of filtered" class="ml-record-card" (click)="toggleExpand(r.id)">
+
+            <!-- Timeline dot -->
+            <div class="ml-record-dot" [style.background]="typeColor(r.record_type)"></div>
+
+            <!-- Colored left border strip -->
+            <div style="position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:12px 0 0 12px;"
+                 [style.background]="typeColor(r.record_type)"></div>
+
+            <!-- Head -->
+            <div class="ml-record-head">
+              <div class="ml-record-icon" [style.background]="typeBg(r.record_type)">
+                <i-tabler [name]="typeIcon(r.record_type)"
+                          [style.color]="typeColor(r.record_type)"
+                          style="width:17px;height:17px;"></i-tabler>
+              </div>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.4px;"
+                        [style.color]="typeColor(r.record_type)">
+                    {{ typeLabel(r.record_type) }}
+                  </span>
+                  <span *ngIf="r.has_anomaly"
+                        style="font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:20px;
+                               background:#fef2f2;color:#dc2626;border:1px solid #fecaca;
+                               display:inline-flex;align-items:center;gap:3px;">
+                    <i-tabler name="alert-triangle" style="width:10px;height:10px;"></i-tabler>
+                    Anomalie
+                  </span>
+                </div>
+                <p style="margin:1px 0 0;font-size:.78rem;color:#94a3b8;">
+                  {{ r.created_at | date:'dd.MM.yyyy · HH:mm' }}
+                </p>
+              </div>
+              <i-tabler [name]="expandedId === r.id ? 'chevron-up' : 'chevron-down'"
+                        style="width:16px;height:16px;color:#94a3b8;flex-shrink:0;"></i-tabler>
+            </div>
+
+            <!-- Body — main content always visible -->
+            <div class="ml-record-body">
+
+              <!-- Diagnostic -->
+              <div *ngIf="r.diagnosis" class="ml-record-box"
+                   [style.background]="typeBg(r.record_type)"
+                   [style.border-left]="'3px solid ' + typeColor(r.record_type)">
+                <p style="margin:0 0 2px;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;"
+                   [style.color]="typeColor(r.record_type)">Diagnostic</p>
+                <p style="margin:0;color:#334155;">{{ r.diagnosis }}</p>
+              </div>
+
+              <!-- Rezultat analiză -->
+              <div *ngIf="r.analysis_result" class="ml-record-box"
+                   style="background:linear-gradient(135deg,#f0fdfa,#ecfeff);border-left:3px solid #0d9488;">
+                <p style="margin:0 0 2px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.4px;color:#0d9488;">Rezultat analiză</p>
+                <p style="margin:0;color:#134e4a;">{{ r.analysis_result }}</p>
+              </div>
+
+              <!-- Tratament -->
+              <div *ngIf="r.treatment" class="ml-record-box"
+                   style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left:3px solid #ea580c;">
+                <p style="margin:0 0 2px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.4px;color:#ea580c;">Tratament</p>
+                <p style="margin:0;color:#7c2d12;">{{ r.treatment }}</p>
+              </div>
+
+              <!-- Anomalie — expanded only -->
+              <div *ngIf="expandedId === r.id && r.has_anomaly && r.anomaly_notes" class="ml-record-box"
+                   style="background:#fef2f2;border-left:3px solid #dc2626;">
+                <p style="margin:0 0 2px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.4px;color:#dc2626;display:flex;align-items:center;gap:4px;">
+                  <i-tabler name="alert-triangle" style="width:11px;height:11px;"></i-tabler>
+                  Detalii anomalie
+                </p>
+                <p style="margin:0;color:#7f1d1d;">{{ r.anomaly_notes }}</p>
+              </div>
+
+              <!-- Note — expanded only -->
+              <div *ngIf="expandedId === r.id && r.notes_encrypted" class="ml-record-box"
+                   style="background:#f8fafc;border:1px solid #e2e8f0;">
+                <p style="margin:0 0 2px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.4px;color:#64748b;">Note medic</p>
+                <p style="margin:0;color:#475569;">{{ r.notes_encrypted }}</p>
+              </div>
+
+              <!-- If nothing visible yet (empty record), show a placeholder -->
+              <div *ngIf="!r.diagnosis && !r.analysis_result && !r.treatment && !r.notes_encrypted"
+                   style="font-size:.82rem;color:#94a3b8;font-style:italic;padding:0 2px;">
+                Nicio informație suplimentară.
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="ml-record-footer">
+              <span></span>
+              <span *ngIf="r.notes_encrypted || r.has_anomaly"
+                    style="font-size:.72rem;font-weight:600;"
+                    [style.color]="r.has_anomaly ? '#dc2626' : typeColor(r.record_type)">
+                {{ expandedId === r.id ? 'Restrânge ▲' : (r.has_anomaly ? '⚠ Detalii ▼' : 'Note ▼') }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

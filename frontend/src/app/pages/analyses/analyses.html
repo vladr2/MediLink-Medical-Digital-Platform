@@ -1,0 +1,196 @@
+<style>
+.ml-analysis-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: visible;
+  transition: box-shadow .2s, transform .2s;
+  cursor: pointer;
+  background: #fff;
+  display: block;
+}
+.ml-analysis-card:hover {
+  box-shadow: 0 4px 20px rgba(13, 148, 136, .13);
+  transform: translateY(-1px);
+}
+.ml-analysis-card .card-strip { height: 4px; background: linear-gradient(90deg, #0d9488, #06b6d4); }
+.ml-analysis-card .card-header { padding: 14px 16px 10px; display: flex; align-items: flex-start; gap: 12px; }
+.ml-analysis-card .card-icon {
+  width: 38px; height: 38px; border-radius: 10px; background: #f0fdfa; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.ml-analysis-card .card-box {
+  margin: 0 16px 12px; padding: 10px 12px; border-radius: 8px;
+}
+.ml-analysis-card .card-footer {
+  padding: 8px 16px 12px; border-top: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ml-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+
+      <!-- ── Header ─────────────────────────────────────────────────────────── -->
+      <mat-card-header style="padding: 20px 24px 0; flex-direction: column; align-items: stretch;">
+        <div class="d-flex align-items-center gap-12 m-b-20" style="flex-wrap:wrap;">
+
+          <div class="d-flex align-items-center gap-8">
+            <div style="width:40px;height:40px;border-radius:10px;
+                        background:linear-gradient(135deg,#0d9488,#06b6d4);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="test-pipe" style="color:#fff;width:20px;height:20px;"></i-tabler>
+            </div>
+            <div>
+              <mat-card-title style="margin:0;font-size:1.1rem;font-weight:700;">Analizele mele</mat-card-title>
+              <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                Ultima analiză: <strong>{{ lastDate }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <span style="flex:1;"></span>
+
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;
+                      background:#f0fdfa;border-radius:8px;border:1px solid #99f6e4;">
+            <i-tabler name="test-pipe" style="width:15px;height:15px;color:#0d9488;"></i-tabler>
+            <span style="font-size:.8rem;color:#134e4a;font-weight:600;">Total:</span>
+            <span style="font-size:.85rem;font-weight:800;color:#0d9488;">{{ analyses.length }}</span>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="w-100 m-b-4" subscriptSizing="dynamic">
+          <mat-label>Caută în analize…</mat-label>
+          <i-tabler matPrefix name="search" style="width:18px;height:18px;color:#94a3b8;margin-right:6px;"></i-tabler>
+          <input matInput [(ngModel)]="searchText" placeholder="rezultat, diagnostic, note…">
+          <button *ngIf="searchText" matSuffix mat-icon-button (click)="searchText=''">
+            <i-tabler name="x" style="width:16px;height:16px;"></i-tabler>
+          </button>
+        </mat-form-field>
+      </mat-card-header>
+
+      <!-- ── Content ────────────────────────────────────────────────────────── -->
+      <mat-card-content style="padding: 16px 24px 24px;">
+
+        <!-- Loading -->
+        <app-skeleton *ngIf="loading" [rows]="4" [card]="true" [title]="true"></app-skeleton>
+
+        <!-- Empty state -->
+        <div *ngIf="!loading && analyses.length === 0"
+             style="display:flex;flex-direction:column;align-items:center;padding:64px 24px;gap:16px;">
+          <div style="width:72px;height:72px;border-radius:18px;background:#f0fdfa;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="test-pipe-off" style="width:36px;height:36px;color:#0d9488;opacity:.45;"></i-tabler>
+          </div>
+          <div style="text-align:center;">
+            <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Nicio analiză înregistrată</p>
+            <p style="margin:6px 0 0;font-size:.85rem;color:#64748b;">
+              Analizele tale vor apărea aici după ce medicul le adaugă în dosar.
+            </p>
+          </div>
+        </div>
+
+        <!-- No results -->
+        <div *ngIf="!loading && analyses.length > 0 && filtered.length === 0"
+             style="text-align:center;padding:40px 24px;">
+          <i-tabler name="search-off" style="width:36px;height:36px;color:#94a3b8;"></i-tabler>
+          <p style="margin:8px 0 0;color:#64748b;">Niciun rezultat pentru „{{ searchText }}"</p>
+        </div>
+
+        <!-- Card grid -->
+        <div *ngIf="!loading && filtered.length > 0" class="ml-analysis-grid">
+
+          <div *ngFor="let a of filtered" class="ml-analysis-card" (click)="toggleExpand(a.id)">
+
+            <!-- color strip -->
+            <div class="card-strip"></div>
+
+            <!-- header row -->
+            <div class="card-header">
+              <div class="card-icon">
+                <i-tabler name="microscope" style="width:19px;height:19px;color:#0d9488;"></i-tabler>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;
+                               letter-spacing:.5px;color:#0d9488;">Analiză</span>
+                  <span *ngIf="isRecent(a.created_at)"
+                        style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;
+                               background:#f0fdfa;color:#0d9488;border:1px solid #99f6e4;">
+                    ✦ Recent
+                  </span>
+                  <span *ngIf="a.has_anomaly"
+                        style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;
+                               background:#fef2f2;color:#dc2626;border:1px solid #fecaca;
+                               display:inline-flex;align-items:center;gap:4px;">
+                    <i-tabler name="alert-triangle" style="width:11px;height:11px;"></i-tabler>
+                    Anomalie detectată
+                  </span>
+                </div>
+                <p style="margin:2px 0 0;font-size:.8rem;color:#64748b;">
+                  {{ a.created_at | date:'dd.MM.yyyy HH:mm' }}
+                </p>
+              </div>
+              <i-tabler [name]="expandedId === a.id ? 'chevron-up' : 'chevron-down'"
+                        style="width:17px;height:17px;color:#94a3b8;flex-shrink:0;margin-top:4px;">
+              </i-tabler>
+            </div>
+
+            <!-- analysis result — always visible -->
+            <div class="card-box" style="background:linear-gradient(135deg,#f0fdfa,#ecfeff);
+                                         border-left:3px solid #0d9488;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#0d9488;">Rezultat analiză</p>
+              <p style="margin:0;font-size:.87rem;color:#134e4a;line-height:1.5;">
+                {{ a.analysis_result || '—' }}
+              </p>
+            </div>
+
+            <!-- diagnosis — always visible if exists -->
+            <div *ngIf="a.diagnosis" class="card-box"
+                 style="background:linear-gradient(135deg,#fefce8,#fffbeb);border-left:3px solid #ca8a04;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#92400e;">Diagnostic</p>
+              <p style="margin:0;font-size:.87rem;color:#78350f;line-height:1.5;">{{ a.diagnosis }}</p>
+            </div>
+
+            <!-- anomaly details — only when expanded -->
+            <div *ngIf="expandedId === a.id && a.has_anomaly && a.anomaly_notes"
+                 class="card-box" style="background:#fef2f2;border-left:3px solid #dc2626;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#dc2626;display:flex;align-items:center;gap:4px;">
+                <i-tabler name="alert-triangle" style="width:12px;height:12px;"></i-tabler>
+                Detalii anomalie
+              </p>
+              <p style="margin:0;font-size:.87rem;color:#7f1d1d;line-height:1.5;">{{ a.anomaly_notes }}</p>
+            </div>
+
+            <!-- notes — only when expanded -->
+            <div *ngIf="expandedId === a.id && a.notes_encrypted"
+                 class="card-box" style="background:#f8fafc;border:1px solid #e2e8f0;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#64748b;">Note medic</p>
+              <p style="margin:0;font-size:.85rem;color:#475569;line-height:1.5;">{{ a.notes_encrypted }}</p>
+            </div>
+
+            <!-- footer -->
+            <div class="card-footer">
+              <span style="font-size:.73rem;color:#94a3b8;">{{ a.id | slice:0:8 }}…</span>
+              <span style="font-size:.73rem;color:#0d9488;font-weight:600;">
+                {{ expandedId === a.id ? 'Restrânge ▲' : (a.notes_encrypted ? 'Note ▼' : '') }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

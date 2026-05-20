@@ -1,0 +1,178 @@
+<style>
+.ml-treatment-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: visible;
+  transition: box-shadow .2s, transform .2s;
+  cursor: pointer;
+  background: #fff;
+  display: block;
+}
+.ml-treatment-card:hover {
+  box-shadow: 0 4px 20px rgba(234, 88, 12, .13);
+  transform: translateY(-1px);
+}
+.ml-treatment-card .card-strip { height: 4px; background: linear-gradient(90deg, #ea580c, #f97316); }
+.ml-treatment-card .card-header { padding: 14px 16px 10px; display: flex; align-items: flex-start; gap: 12px; }
+.ml-treatment-card .card-icon {
+  width: 38px; height: 38px; border-radius: 10px; background: #fff7ed; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.ml-treatment-card .card-box {
+  margin: 0 16px 12px; padding: 10px 12px; border-radius: 8px;
+}
+.ml-treatment-card .card-footer {
+  padding: 8px 16px 12px; border-top: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ml-treatment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+
+      <!-- ── Header ─────────────────────────────────────────────────────────── -->
+      <mat-card-header style="padding: 20px 24px 0; flex-direction: column; align-items: stretch;">
+        <div class="d-flex align-items-center gap-12 m-b-20" style="flex-wrap:wrap;">
+
+          <div class="d-flex align-items-center gap-8">
+            <div style="width:40px;height:40px;border-radius:10px;
+                        background:linear-gradient(135deg,#ea580c,#f97316);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="pill" style="color:#fff;width:20px;height:20px;"></i-tabler>
+            </div>
+            <div>
+              <mat-card-title style="margin:0;font-size:1.1rem;font-weight:700;">Tratamentele mele</mat-card-title>
+              <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                Ultimul tratament: <strong>{{ lastDate }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <span style="flex:1;"></span>
+
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;
+                      background:#fff7ed;border-radius:8px;border:1px solid #fed7aa;">
+            <i-tabler name="pill" style="width:15px;height:15px;color:#ea580c;"></i-tabler>
+            <span style="font-size:.8rem;color:#7c2d12;font-weight:600;">Total:</span>
+            <span style="font-size:.85rem;font-weight:800;color:#ea580c;">{{ treatments.length }}</span>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="w-100 m-b-4" subscriptSizing="dynamic">
+          <mat-label>Caută în tratamente…</mat-label>
+          <i-tabler matPrefix name="search" style="width:18px;height:18px;color:#94a3b8;margin-right:6px;"></i-tabler>
+          <input matInput [(ngModel)]="searchText" placeholder="tratament, diagnostic, note…">
+          <button *ngIf="searchText" matSuffix mat-icon-button (click)="searchText=''">
+            <i-tabler name="x" style="width:16px;height:16px;"></i-tabler>
+          </button>
+        </mat-form-field>
+      </mat-card-header>
+
+      <!-- ── Content ────────────────────────────────────────────────────────── -->
+      <mat-card-content style="padding: 16px 24px 24px;">
+
+        <!-- Loading -->
+        <app-skeleton *ngIf="loading" [rows]="4" [card]="true" [title]="true"></app-skeleton>
+
+        <!-- Empty state -->
+        <div *ngIf="!loading && treatments.length === 0"
+             style="display:flex;flex-direction:column;align-items:center;padding:64px 24px;gap:16px;">
+          <div style="width:72px;height:72px;border-radius:18px;background:#fff7ed;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="pill-off" style="width:36px;height:36px;color:#ea580c;opacity:.45;"></i-tabler>
+          </div>
+          <div style="text-align:center;">
+            <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Niciun tratament înregistrat</p>
+            <p style="margin:6px 0 0;font-size:.85rem;color:#64748b;">
+              Tratamentele prescrise de medic vor apărea aici.
+            </p>
+          </div>
+        </div>
+
+        <!-- No results -->
+        <div *ngIf="!loading && treatments.length > 0 && filtered.length === 0"
+             style="text-align:center;padding:40px 24px;">
+          <i-tabler name="search-off" style="width:36px;height:36px;color:#94a3b8;"></i-tabler>
+          <p style="margin:8px 0 0;color:#64748b;">Niciun rezultat pentru „{{ searchText }}"</p>
+        </div>
+
+        <!-- Card grid -->
+        <div *ngIf="!loading && filtered.length > 0" class="ml-treatment-grid">
+
+          <div *ngFor="let t of filtered" class="ml-treatment-card" (click)="toggleExpand(t.id)">
+
+            <!-- color strip -->
+            <div class="card-strip"></div>
+
+            <!-- header row -->
+            <div class="card-header">
+              <div class="card-icon">
+                <i-tabler name="pill" style="width:19px;height:19px;color:#ea580c;"></i-tabler>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-size:.75rem;font-weight:700;text-transform:uppercase;
+                               letter-spacing:.5px;color:#ea580c;">Tratament</span>
+                  <span *ngIf="isRecent(t.created_at)"
+                        style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;
+                               background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;">
+                    ✦ Recent
+                  </span>
+                </div>
+                <p style="margin:2px 0 0;font-size:.8rem;color:#64748b;">
+                  {{ t.created_at | date:'dd.MM.yyyy HH:mm' }}
+                </p>
+              </div>
+              <i-tabler [name]="expandedId === t.id ? 'chevron-up' : 'chevron-down'"
+                        style="width:17px;height:17px;color:#94a3b8;flex-shrink:0;margin-top:4px;">
+              </i-tabler>
+            </div>
+
+            <!-- diagnosis — always visible if exists -->
+            <div *ngIf="t.diagnosis" class="card-box"
+                 style="background:linear-gradient(135deg,#fefce8,#fffbeb);border-left:3px solid #ca8a04;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#92400e;">Diagnostic</p>
+              <p style="margin:0;font-size:.87rem;color:#78350f;line-height:1.5;">{{ t.diagnosis }}</p>
+            </div>
+
+            <!-- treatment — always visible -->
+            <div class="card-box"
+                 style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border-left:3px solid #ea580c;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#c2410c;">Tratament prescris</p>
+              <p style="margin:0;font-size:.87rem;color:#7c2d12;line-height:1.5;">
+                {{ t.treatment || '—' }}
+              </p>
+            </div>
+
+            <!-- notes — only when expanded -->
+            <div *ngIf="expandedId === t.id && t.notes_encrypted"
+                 class="card-box" style="background:#f8fafc;border:1px solid #e2e8f0;">
+              <p style="margin:0 0 3px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.5px;color:#64748b;">Note medic</p>
+              <p style="margin:0;font-size:.85rem;color:#475569;line-height:1.5;">{{ t.notes_encrypted }}</p>
+            </div>
+
+            <!-- footer -->
+            <div class="card-footer">
+              <span style="font-size:.73rem;color:#94a3b8;">{{ t.id | slice:0:8 }}…</span>
+              <span style="font-size:.73rem;color:#ea580c;font-weight:600;">
+                {{ expandedId === t.id ? 'Restrânge ▲' : (t.notes_encrypted ? 'Note ▼' : '') }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

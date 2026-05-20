@@ -1,0 +1,215 @@
+<div class="row">
+
+  <!-- Header salut -->
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-16">
+          <div class="bg-light-info rounded p-16">
+            <i-tabler name="user-heart" class="icon-36" style="color:#0ea5e9;"></i-tabler>
+          </div>
+          <div class="flex-1">
+            <h4 class="mat-headline-6 f-w-600 m-0">
+              Bun venit,
+              {{ (currentUser?.first_name || currentUser?.last_name)
+                  ? currentUser?.first_name + ' ' + currentUser?.last_name
+                  : currentUser?.email }}
+            </h4>
+            <p class="mat-body-1 text-muted m-0">Coordonator Clinic · {{ weekAppointments.length }} programări săptămâna aceasta</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="col-lg-3 col-sm-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-12">
+          <div class="bg-light-warning rounded p-12">
+            <i-tabler name="clock-hour-4" class="icon-24 text-warning"></i-tabler>
+          </div>
+          <div>
+            <h3 class="mat-headline-5 f-w-700 m-0 text-warning">{{ pendingAll.length }}</h3>
+            <p class="mat-body-2 text-muted m-0">În așteptare</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-sm-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-12">
+          <div class="bg-light-success rounded p-12">
+            <i-tabler name="calendar-check" class="icon-24 text-success"></i-tabler>
+          </div>
+          <div>
+            <h3 class="mat-headline-5 f-w-700 m-0 text-success">{{ confirmedToday.length }}</h3>
+            <p class="mat-body-2 text-muted m-0">Confirmate azi</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-sm-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-12">
+          <div class="bg-light-error rounded p-12">
+            <i-tabler name="user-question" class="icon-24 text-error"></i-tabler>
+          </div>
+          <div>
+            <h3 class="mat-headline-5 f-w-700 m-0 text-error">{{ unassignedPatients.length }}</h3>
+            <p class="mat-body-2 text-muted m-0">Pacienți neasignați</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-sm-6 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-12">
+          <div class="bg-light-primary rounded p-12">
+            <i-tabler name="calendar-week" class="icon-24 text-primary"></i-tabler>
+          </div>
+          <div>
+            <h3 class="mat-headline-5 f-w-700 m-0 text-primary">{{ weekAppointments.length }}</h3>
+            <p class="mat-body-2 text-muted m-0">Săptămâna aceasta</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Coadă lucru: programări pending -->
+  <div class="col-lg-7 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16" style="border-bottom:1px solid #f1f5f9;">
+        <mat-card-title style="display:flex;align-items:center;gap:8px;">
+          <i-tabler name="clock-bolt" style="width:18px;height:18px;color:#f59e0b;"></i-tabler>
+          Programări în așteptare
+          <span style="background:#fef3c7;color:#92400e;border-radius:12px;padding:2px 8px;
+                       font-size:.72rem;font-weight:700;">{{ pendingAll.length }}</span>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content style="padding:0;">
+        <app-skeleton *ngIf="loading" [rows]="4" [card]="false" class="p-16 d-block"></app-skeleton>
+        <div *ngIf="!loading && pendingAll.length === 0" class="p-24 text-center">
+          <i-tabler name="circle-check" style="width:36px;height:36px;color:#22c55e;display:block;margin:0 auto 8px;"></i-tabler>
+          <p style="margin:0;font-size:.85rem;color:#64748b;">Toate programările sunt procesate. ✓</p>
+        </div>
+        <div *ngFor="let a of pendingAll"
+             style="padding:12px 16px;border-bottom:1px solid #f8fafc;display:flex;
+                    align-items:center;justify-content:space-between;gap:12px;">
+          <div style="min-width:0;">
+            <p style="margin:0;font-size:.85rem;font-weight:600;color:#1e293b;">
+              {{ formatDate(a.datetime) }} · {{ formatTime(a.datetime) }}
+            </p>
+            <p style="margin:2px 0 0;font-size:.75rem;color:#64748b;
+                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ a.reason || a.notes || 'Fără motiv specificat' }}
+            </p>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button mat-flat-button
+                    style="background:#22c55e;color:#fff;height:30px;font-size:.75rem;padding:0 10px;min-width:unset;border-radius:6px;"
+                    [disabled]="updating[a.id]"
+                    (click)="confirm(a)">
+              <i-tabler name="check" style="width:13px;height:13px;margin-right:3px;vertical-align:middle;"></i-tabler>
+              Confirmă
+            </button>
+            <button mat-stroked-button
+                    style="height:30px;font-size:.75rem;padding:0 10px;min-width:unset;border-radius:6px;color:#ef4444;border-color:#ef4444;"
+                    [disabled]="updating[a.id]"
+                    (click)="cancel(a)">
+              Anulează
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Programările săptămânii -->
+  <div class="col-lg-5 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16" style="border-bottom:1px solid #f1f5f9;">
+        <mat-card-title style="display:flex;align-items:center;gap:8px;">
+          <i-tabler name="calendar-week" style="width:18px;height:18px;color:#0ea5e9;"></i-tabler>
+          Programările săptămânii
+          <span *ngIf="weekAppointments.length > 0"
+                style="background:#e0f2fe;color:#0369a1;border-radius:12px;padding:2px 8px;
+                       font-size:.72rem;font-weight:700;">{{ weekAppointments.length }}</span>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content style="padding:0;max-height:340px;overflow-y:auto;">
+        <div *ngIf="!loading && weekAppointments.length === 0" class="p-24 text-center">
+          <i-tabler name="calendar-off" style="width:32px;height:32px;color:#cbd5e1;display:block;margin:0 auto 8px;"></i-tabler>
+          <p style="margin:0;font-size:.85rem;color:#94a3b8;">Nicio programare săptămâna aceasta.</p>
+        </div>
+        <div *ngFor="let a of weekAppointments"
+             style="padding:10px 16px;border-bottom:1px solid #f8fafc;
+                    display:flex;align-items:center;gap:10px;">
+          <div style="width:44px;height:44px;border-radius:10px;background:#f0f9ff;flex-shrink:0;
+                      display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <span style="font-size:.72rem;font-weight:700;color:#0284c7;line-height:1.2;">
+              {{ formatDate(a.datetime) }}
+            </span>
+            <span style="font-size:.65rem;color:#7dd3fc;font-weight:600;">{{ formatTime(a.datetime) }}</span>
+          </div>
+          <div style="min-width:0;flex:1;">
+            <p style="margin:0;font-size:.82rem;font-weight:600;color:#1e293b;
+                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ a.reason || 'Consultație' }}
+            </p>
+          </div>
+          <span style="padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700;flex-shrink:0;"
+                [style.background]="statusColor(a.status) + '20'"
+                [style.color]="statusColor(a.status)">
+            {{ statusLabel(a.status) }}
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Pacienți neasignați -->
+  <div class="col-12 m-b-24" *ngIf="unassignedPatients.length > 0">
+    <mat-card class="cardWithShadow" style="border-left:4px solid #ec4899;">
+      <mat-card-header class="p-16" style="border-bottom:1px solid #f1f5f9;">
+        <mat-card-title style="display:flex;align-items:center;gap:8px;">
+          <i-tabler name="user-question" style="width:18px;height:18px;color:#ec4899;"></i-tabler>
+          Pacienți fără doctor asignat
+          <span style="background:#fce7f3;color:#9d174d;border-radius:12px;padding:2px 8px;
+                       font-size:.72rem;font-weight:700;">{{ unassignedPatients.length }}</span>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-16">
+        <p style="margin:0 0 12px;font-size:.82rem;color:#64748b;">
+          Acești pacienți nu au un medic atribuit. Mergi la
+          <a routerLink="/dashboard/assistant-patients" style="color:#0ea5e9;font-weight:600;">Lista Pacienților</a>
+          pentru a-i asigna.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span *ngFor="let p of unassignedPatients.slice(0,8)"
+                style="background:#fce7f3;border:1px solid #fbcfe8;border-radius:20px;
+                       padding:4px 12px;font-size:.78rem;color:#9d174d;font-weight:500;">
+            {{ (p.first_name || p.last_name) ? p.first_name + ' ' + p.last_name : p.email }}
+          </span>
+          <span *ngIf="unassignedPatients.length > 8"
+                style="background:#f1f5f9;border-radius:20px;padding:4px 12px;
+                       font-size:.78rem;color:#64748b;">
+            +{{ unassignedPatients.length - 8 }} mai mulți
+          </span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

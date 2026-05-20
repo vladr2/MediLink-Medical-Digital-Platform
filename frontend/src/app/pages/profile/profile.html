@@ -1,0 +1,494 @@
+<div class="row">
+  <div class="col-lg-6 col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16">
+        <mat-card-title>Informații cont</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-24">
+        <div class="d-flex align-items-center gap-16 m-b-24">
+          <div class="bg-light-primary rounded p-16">
+            <i-tabler name="user" class="icon-48 text-primary"></i-tabler>
+          </div>
+          <div>
+            <h5 class="mat-subtitle-1 f-w-600 m-0">
+              {{ (currentUser?.first_name || currentUser?.last_name) ? currentUser?.first_name + ' ' + currentUser?.last_name : currentUser?.email }}
+            </h5>
+            <p class="mat-body-2 text-muted m-0">{{ currentUser?.email }}</p>
+            <p class="mat-body-2 text-muted m-0">{{ currentUser?.role | titlecase }}</p>
+          </div>
+        </div>
+
+        <form [formGroup]="userForm" (ngSubmit)="saveUserInfo()">
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Prenume</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="first_name" placeholder="Ion" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Nume</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="last_name" placeholder="Popescu" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Telefon</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="phone" placeholder="07XX XXX XXX" />
+            <mat-error *ngIf="userForm.get('phone')?.hasError('phoneInvalid')">
+              Număr de telefon invalid (7-20 caractere)
+            </mat-error>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Data nașterii</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="birth_date" placeholder="DD.MM.YYYY" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Adresă</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="address" rows="2" placeholder="Str. Exemplu, Nr. 1, Brașov"></textarea>
+          </mat-form-field>
+
+          <div *ngIf="successMessage" class="text-success m-b-12">{{ successMessage }}</div>
+          <div *ngIf="errorMessage" class="text-error m-b-12">{{ errorMessage }}</div>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ saving ? 'Se salvează...' : 'Salvează' }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-6 col-12 m-b-24" *ngIf="currentUser?.role === 'patient'">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16">
+        <mat-card-title>Date medicale</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-24">
+        <app-skeleton *ngIf="loading" [rows]="5" [card]="false" [title]="true"></app-skeleton>
+
+        <form [formGroup]="patientForm" (ngSubmit)="savePatientInfo()" *ngIf="!loading">
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">CNP</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="cnp" placeholder="1234567890123" maxlength="13" />
+            <mat-hint>13 cifre</mat-hint>
+            <mat-error *ngIf="patientForm.get('cnp')?.hasError('cnpInvalid')">
+              CNP-ul trebuie să conțină exact 13 cifre
+            </mat-error>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Gen</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="gender">
+              <mat-option value="">Nespecificat</mat-option>
+              <mat-option value="Masculin">Masculin</mat-option>
+              <mat-option value="Feminin">Feminin</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Grupă sanguină</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="blood_type">
+              <mat-option value="">Necunoscută</mat-option>
+              <mat-option *ngFor="let bt of bloodTypes" [value]="bt">{{ bt }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Alergii</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="allergies" rows="2" placeholder="Ex: penicilină, polen..."></textarea>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Condiții cronice</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="chronic_conditions" rows="2" placeholder="Ex: diabet, hipertensiune..."></textarea>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Contact urgență</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="emergency_contact" placeholder="Nume persoană de contact" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Telefon urgență</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="emergency_phone" placeholder="07XX XXX XXX" />
+            <mat-error *ngIf="patientForm.get('emergency_phone')?.hasError('phoneInvalid')">
+              Număr de telefon invalid (7-20 caractere)
+            </mat-error>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ saving ? 'Se salvează...' : 'Salvează date medicale' }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-6 col-12 m-b-24" *ngIf="currentUser?.role === 'doctor'">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16">
+        <mat-card-title>Profil medical</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-24">
+        <app-skeleton *ngIf="loading" [rows]="5" [card]="false" [title]="true"></app-skeleton>
+
+        <form [formGroup]="doctorForm" (ngSubmit)="saveDoctorInfo()" *ngIf="!loading">
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Specializare</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="specialization" placeholder="Ex: cardiologie" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Departament</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="department" placeholder="Ex: Cardiologie" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Număr licență</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="license_number" placeholder="Ex: MED-001" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Telefon cabinet</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput formControlName="phone_cabinet" placeholder="0268 XXX XXX" />
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Program</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="schedule" rows="2" placeholder="Ex: Luni-Vineri 08:00-16:00"></textarea>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Biografie</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="bio" rows="3" placeholder="Descriere scurtă..."></textarea>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ saving ? 'Se salvează...' : 'Salvează profil medical' }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Card schimbare parolă — vizibil pentru toți -->
+  <div class="col-lg-6 col-12 m-b-24">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16">
+        <mat-card-title>Schimbare parolă</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="p-24">
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Parola curentă</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput type="password" formControlName="current_password" placeholder="Parola curentă" />
+            <mat-error *ngIf="passwordForm.get('current_password')?.hasError('required')">
+              Câmp obligatoriu
+            </mat-error>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Parola nouă</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput type="password" formControlName="new_password" placeholder="Min. 8 caractere, o majusculă, o cifră" />
+            <mat-hint>Minim 8 caractere, o literă mare, o cifră</mat-hint>
+            <mat-error *ngIf="passwordForm.get('new_password')?.hasError('required')">Câmp obligatoriu</mat-error>
+            <mat-error *ngIf="passwordForm.get('new_password')?.hasError('minlength')">Minim 8 caractere</mat-error>
+            <mat-error *ngIf="passwordForm.get('new_password')?.hasError('pattern')">Trebuie să conțină o majusculă și o cifră</mat-error>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Confirmă parola nouă</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <input matInput type="password" formControlName="confirm_password" placeholder="Repetă parola nouă" />
+            <mat-error *ngIf="passwordForm.hasError('passwordMismatch') && passwordForm.get('confirm_password')?.touched">
+              Parolele nu coincid
+            </mat-error>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="changingPassword">
+            <i-tabler name="lock" class="m-r-8"></i-tabler>
+            {{ changingPassword ? 'Se schimbă...' : 'Schimbă parola' }}
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ── Card sesiuni active (Feature 9) — vizibil pentru toți ────────── -->
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow" style="border-left:4px solid var(--mat-sys-primary);">
+      <mat-card-header class="p-16">
+        <div class="d-flex align-items-center justify-content-between w-100">
+          <div class="d-flex align-items-center gap-12">
+            <div class="bg-light-primary rounded p-12">
+              <i-tabler name="devices" class="icon-28 text-primary"></i-tabler>
+            </div>
+            <div>
+              <mat-card-title class="m-0">Sesiuni active</mat-card-title>
+              <p class="mat-body-2 text-muted m-0">
+                Dispozitivele conectate la contul tău
+              </p>
+            </div>
+          </div>
+          <div class="d-flex gap-8">
+            <button mat-icon-button (click)="loadSessions()" matTooltip="Reîncarcă" [disabled]="loadingSessions">
+              <i-tabler name="refresh"></i-tabler>
+            </button>
+            <button mat-stroked-button color="warn"
+                    *ngIf="sessions.length > 1"
+                    (click)="revokeAllOtherSessions()"
+                    [disabled]="revokingAll">
+              <i-tabler name="logout" class="m-r-6" style="width:16px;height:16px;"></i-tabler>
+              {{ revokingAll ? 'Se deconectează...' : 'Deconectează toate celelalte' }}
+            </button>
+          </div>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content class="p-16 p-t-0">
+
+        <!-- Loading -->
+        <div *ngIf="loadingSessions" class="p-16">
+          <div style="background:var(--mat-sys-surface-variant);height:56px;border-radius:8px;margin-bottom:8px;animation:pulse 1.5s ease-in-out infinite;"></div>
+          <div style="background:var(--mat-sys-surface-variant);height:56px;border-radius:8px;animation:pulse 1.5s ease-in-out infinite;"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div *ngIf="!loadingSessions && sessions.length === 0"
+             class="p-24 text-center text-muted mat-body-2">
+          <i-tabler name="device-unknown" class="icon-36 text-muted" style="display:block;margin:0 auto 8px;"></i-tabler>
+          Nu există sesiuni active.
+        </div>
+
+        <!-- Sessions list -->
+        <div *ngIf="!loadingSessions && sessions.length > 0">
+          <div *ngFor="let s of sessions; let last = last"
+               style="display:flex;align-items:center;justify-content:space-between;
+                      gap:12px;padding:14px 8px;flex-wrap:wrap;"
+               [style.border-bottom]="!last ? '1px solid var(--mat-sys-outline)' : 'none'">
+
+            <div class="d-flex align-items-center gap-12 flex-grow-1">
+              <!-- Icon dispozitiv -->
+              <div [class]="s.is_current ? 'bg-light-success rounded p-10' : 'bg-light-primary rounded p-10'">
+                <i-tabler
+                  [name]="s.device?.includes('Android') || s.device?.includes('iPhone') || s.device?.includes('iPad') ? 'device-mobile' : 'device-desktop'"
+                  [class]="s.is_current ? 'icon-24 text-success' : 'icon-24 text-primary'">
+                </i-tabler>
+              </div>
+
+              <div>
+                <div class="d-flex align-items-center gap-8 flex-wrap">
+                  <span class="mat-subtitle-2 f-w-600">{{ s.device }}</span>
+                  <mat-chip *ngIf="s.is_current" color="primary" highlighted
+                            style="font-size:11px;height:20px;min-height:20px;">
+                    Sesiunea curentă
+                  </mat-chip>
+                </div>
+                <div class="d-flex gap-16 flex-wrap m-t-4">
+                  <span class="mat-caption text-muted d-flex align-items-center gap-4">
+                    <i-tabler name="map-pin" style="width:13px;height:13px;"></i-tabler>
+                    {{ s.ip_address }}
+                  </span>
+                  <span class="mat-caption text-muted d-flex align-items-center gap-4">
+                    <i-tabler name="clock" style="width:13px;height:13px;"></i-tabler>
+                    Ultima activitate: {{ s.last_activity | date:'dd.MM.yyyy HH:mm' }}
+                  </span>
+                  <span class="mat-caption text-muted d-flex align-items-center gap-4">
+                    <i-tabler name="calendar-plus" style="width:13px;height:13px;"></i-tabler>
+                    Autentificat: {{ s.created_at | date:'dd.MM.yyyy HH:mm' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Buton deconectare -->
+            <button mat-stroked-button color="warn"
+                    (click)="revokeSession(s.id)"
+                    [disabled]="revokingSession === s.id"
+                    style="flex-shrink:0;font-size:13px;">
+              <i-tabler name="logout" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+              {{ revokingSession === s.id ? 'Se deconectează...' : (s.is_current ? 'Deconectare' : 'Deconectează') }}
+            </button>
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Card 2FA + Email notif — vizibil pentru TOATE rolurile -->
+  <div class="col-12 m-b-24">
+    <mat-card class="cardWithShadow" style="border-left: 4px solid #1976d2;">
+      <mat-card-content class="p-24">
+        <!-- ── 2FA / MFA ──────────────────────────────────────────────────────────── -->
+        <div style="margin-bottom:20px;padding:16px;border-radius:8px;
+                    border:1px solid var(--mat-sys-outline);">
+
+          <!-- Header row -->
+          <div class="d-flex align-items-center justify-content-between gap-16">
+            <div class="d-flex align-items-center gap-16">
+              <div class="bg-light-primary rounded p-12 flex-shrink-0">
+                <i-tabler name="shield-lock" class="icon-28 text-primary"></i-tabler>
+              </div>
+              <div>
+                <h6 class="mat-subtitle-1 f-w-600 m-0">Autentificare în 2 pași (2FA)</h6>
+                <p class="mat-body-2 text-muted m-0">
+                  <span *ngIf="!mfaEnabled" style="color:#dc2626;">Dezactivat</span>
+                  <span *ngIf="mfaEnabled" style="color:#16a34a;font-weight:600;">✅ Activat — contul tău este protejat</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Toggle activare/dezactivare -->
+            <div class="d-flex gap-8">
+              <button *ngIf="!mfaEnabled && !showMfaSetup"
+                      mat-flat-button color="primary"
+                      style="border-radius:8px;font-size:.82rem;"
+                      [disabled]="savingMfa"
+                      (click)="setupMfa()">
+                <i-tabler name="shield-plus" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+                {{ savingMfa ? 'Se generează...' : 'Activează 2FA' }}
+              </button>
+
+              <button *ngIf="mfaEnabled && !showMfaDisable"
+                      mat-stroked-button color="warn"
+                      style="border-radius:8px;font-size:.82rem;"
+                      (click)="showMfaDisable = true">
+                <i-tabler name="shield-off" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+                Dezactivează
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel activare: QR + cod -->
+          <div *ngIf="showMfaSetup"
+               style="margin-top:16px;padding:16px;background:#f8fafc;border-radius:8px;
+                      border:1px solid #e2e8f0;">
+            <p style="margin:0 0 12px;font-size:.88rem;font-weight:700;color:#1e293b;">
+              Pasul 1 — Scanează QR code-ul cu Google Authenticator sau Authy
+            </p>
+
+            <!-- QR Code via qrserver.com (fără npm) -->
+            <div style="text-align:center;margin-bottom:12px;">
+              <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeUri(mfaQrUri)"
+                   alt="QR Code 2FA"
+                   style="border-radius:8px;border:1px solid #e2e8f0;">
+            </div>
+
+            <p style="margin:0 0 8px;font-size:.78rem;color:#64748b;text-align:center;">
+              Sau introdu manual cheia secretă:
+            </p>
+            <div style="background:#1e293b;color:#a5f3fc;border-radius:6px;padding:8px 12px;
+                        font-family:monospace;font-size:.82rem;text-align:center;
+                        letter-spacing:.1em;margin-bottom:16px;word-break:break-all;">
+              {{ mfaSecret }}
+            </div>
+
+            <p style="margin:0 0 8px;font-size:.88rem;font-weight:700;color:#1e293b;">
+              Pasul 2 — Introdu codul generat de aplicație pentru a confirma
+            </p>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex:1;">
+                <mat-label>Cod TOTP (6 cifre)</mat-label>
+                <input matInput [(ngModel)]="mfaSetupCode" placeholder="000000"
+                       maxlength="6" inputmode="numeric"
+                       style="font-size:1.1rem;letter-spacing:.2em;text-align:center;">
+              </mat-form-field>
+              <button mat-flat-button color="primary"
+                      style="border-radius:8px;height:56px;"
+                      [disabled]="savingMfa || mfaSetupCode.length !== 6"
+                      (click)="enableMfa()">
+                <i-tabler *ngIf="!savingMfa" name="check" style="width:16px;height:16px;margin-right:4px;"></i-tabler>
+                <mat-spinner *ngIf="savingMfa" diameter="16" style="display:inline-block;margin-right:4px;"></mat-spinner>
+                Activează
+              </button>
+            </div>
+            <button mat-button style="margin-top:8px;font-size:.78rem;color:#94a3b8;"
+                    (click)="showMfaSetup = false; mfaSecret = ''; mfaQrUri = '';">
+              Anulează
+            </button>
+          </div>
+
+          <!-- Panel dezactivare: confirmare cod -->
+          <div *ngIf="showMfaDisable"
+               style="margin-top:16px;padding:16px;background:#fff5f5;border-radius:8px;
+                      border:1px solid #fecaca;">
+            <p style="margin:0 0 12px;font-size:.88rem;font-weight:600;color:#dc2626;">
+              Introdu codul TOTP curent pentru a dezactiva 2FA
+            </p>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex:1;">
+                <mat-label>Cod TOTP</mat-label>
+                <input matInput [(ngModel)]="mfaDisableCode" placeholder="000000"
+                       maxlength="6" inputmode="numeric"
+                       style="letter-spacing:.2em;text-align:center;">
+              </mat-form-field>
+              <button mat-flat-button color="warn"
+                      style="border-radius:8px;height:56px;"
+                      [disabled]="savingMfa || mfaDisableCode.length !== 6"
+                      (click)="disableMfa()">
+                Dezactivează
+              </button>
+            </div>
+            <button mat-button style="font-size:.78rem;color:#94a3b8;margin-top:4px;"
+                    (click)="showMfaDisable = false; mfaDisableCode = '';">
+              Anulează
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ── Notificări email ──────────────────────────────────────── -->
+        <div class="d-flex align-items-center justify-content-between gap-16 m-b-24"
+             style="padding:16px;border-radius:8px;border:1px solid var(--mat-sys-outline);">
+          <div class="d-flex align-items-center gap-16">
+            <div class="bg-light-primary rounded p-12 flex-shrink-0">
+              <i-tabler name="mail" class="icon-28 text-primary"></i-tabler>
+            </div>
+            <div>
+              <h6 class="mat-subtitle-1 f-w-600 m-0">Notificări prin email</h6>
+              <p class="mat-body-2 text-muted m-0">
+                Primește confirmări, actualizări și reminder-e de programare la adresa <strong>{{ currentUser?.email }}</strong>
+              </p>
+            </div>
+          </div>
+          <mat-slide-toggle
+            [checked]="emailNotifications"
+            [disabled]="savingEmailPref"
+            (change)="toggleEmailNotifications()"
+            color="primary">
+          </mat-slide-toggle>
+        </div>
+
+        <!-- ── Export GDPR — doar pacienți ── -->
+        <div *ngIf="currentUser?.role === 'patient'"
+             class="d-flex align-items-center justify-content-between flex-wrap gap-16">
+          <div class="d-flex align-items-center gap-16">
+            <div class="bg-light-primary rounded p-12">
+              <i-tabler name="shield-check" class="icon-32 text-primary"></i-tabler>
+            </div>
+            <div>
+              <h6 class="mat-subtitle-1 f-w-600 m-0">Export date personale (GDPR)</h6>
+              <p class="mat-body-2 text-muted m-0">
+                Conform Art. 20 GDPR, ai dreptul să descarci toate datele tale medicale în format JSON.
+              </p>
+            </div>
+          </div>
+          <div class="d-flex gap-8 flex-wrap">
+            <button mat-flat-button color="primary" (click)="exportAsPdf()" [disabled]="exportingPdf">
+              <i-tabler name="file-type-pdf" class="m-r-8"></i-tabler>
+              {{ exportingPdf ? 'Se generează...' : 'Descarcă PDF' }}
+            </button>
+            <button mat-stroked-button color="primary" (click)="exportGdprData('html')" [disabled]="exportingGdpr">
+              <i-tabler name="file-type-html" class="m-r-8"></i-tabler>
+              HTML
+            </button>
+            <button mat-stroked-button color="primary" (click)="exportGdprData('json')" [disabled]="exportingGdpr">
+              <i-tabler name="file-type-json" class="m-r-8"></i-tabler>
+              JSON
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

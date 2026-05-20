@@ -1,0 +1,323 @@
+<style>
+.ml-rx-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  overflow: visible;
+  display: block;
+  transition: box-shadow .2s, transform .2s;
+}
+.ml-rx-card:hover {
+  box-shadow: 0 4px 18px rgba(37, 99, 235, .11);
+  transform: translateY(-1px);
+}
+.ml-rx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+.ml-med-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: .76rem;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
+}
+.ml-med-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 6px;
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+
+      <!-- ── Header ─────────────────────────────────────────────────────────── -->
+      <mat-card-header style="padding:20px 24px 0;flex-direction:column;align-items:stretch;">
+        <div class="d-flex align-items-center gap-12 m-b-16" style="flex-wrap:wrap;">
+
+          <div class="d-flex align-items-center gap-10">
+            <div style="width:42px;height:42px;border-radius:11px;
+                        background:linear-gradient(135deg,#2563eb,#3b82f6);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="pill" style="color:#fff;width:20px;height:20px;"></i-tabler>
+            </div>
+            <div>
+              <mat-card-title style="margin:0;font-size:1.1rem;font-weight:700;">
+                {{ currentRole === 'doctor' ? 'Prescripții emise' : 'Prescripțiile mele' }}
+              </mat-card-title>
+              <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                {{ prescriptions.length }} prescripții înregistrate
+              </p>
+            </div>
+          </div>
+
+          <span style="flex:1;"></span>
+
+          <!-- Stats chip -->
+          <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;
+                      background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;">
+            <i-tabler name="pill" style="width:14px;height:14px;color:#2563eb;"></i-tabler>
+            <span style="font-size:.8rem;color:#1e40af;font-weight:600;">Total:</span>
+            <span style="font-size:.85rem;font-weight:800;color:#2563eb;">{{ prescriptions.length }}</span>
+          </div>
+
+          <!-- Doctor: buton emitere -->
+          <button mat-flat-button color="primary" *ngIf="currentRole === 'doctor'"
+                  (click)="showForm = !showForm" style="border-radius:8px;">
+            <i-tabler [name]="showForm ? 'x' : 'plus'" style="margin-right:6px;width:17px;height:17px;"></i-tabler>
+            {{ showForm ? 'Anulează' : 'Emite prescripție' }}
+          </button>
+        </div>
+      </mat-card-header>
+
+      <!-- ── Formular doctor ─────────────────────────────────────────────────── -->
+      <mat-card-content *ngIf="showForm && currentRole === 'doctor'"
+                        style="padding:0 24px 20px;">
+        <div style="background:#f8fafc;border-radius:12px;padding:20px 24px;border:1px solid #e2e8f0;">
+          <p style="margin:0 0 18px;font-size:.95rem;font-weight:700;color:#1e293b;">
+            <i-tabler name="notes-medical" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:#2563eb;"></i-tabler>
+            Prescripție nouă
+          </p>
+
+          <!-- Template picker -->
+          <div *ngIf="templates.length > 0" style="margin-bottom:14px;">
+            <p style="margin:0 0 7px;font-size:.82rem;font-weight:700;color:#475569;">
+              <i-tabler name="file-text" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;color:#2563eb;"></i-tabler>
+              Aplică template:
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span *ngFor="let t of templates"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;
+                           border-radius:8px;background:#eff6ff;border:1px solid #bfdbfe;
+                           cursor:pointer;font-size:.8rem;color:#1e40af;font-weight:600;
+                           transition:background .15s;"
+                    (click)="applyTemplate(t)">
+                <i-tabler name="template" style="width:13px;height:13px;"></i-tabler>
+                {{ t.name }}
+                <i-tabler name="x" style="width:12px;height:12px;color:#94a3b8;"
+                          (click)="deleteTemplate(t.id); $event.stopPropagation()"></i-tabler>
+              </span>
+            </div>
+          </div>
+
+          <!-- Pacient -->
+          <mat-form-field appearance="outline" class="w-100 m-b-8" subscriptSizing="dynamic">
+            <mat-label>Pacient *</mat-label>
+            <mat-select [(ngModel)]="newRx.patient_id">
+              <mat-option *ngFor="let p of patients" [value]="p.id">{{ getPatientName(p) }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Medicamente -->
+          <div class="d-flex align-items-center justify-content-between m-b-12 m-t-12">
+            <p style="margin:0;font-size:.88rem;font-weight:700;color:#334155;">Medicamente *</p>
+            <button mat-stroked-button color="primary" (click)="addMedication()" type="button"
+                    style="border-radius:8px;font-size:.82rem;">
+              <i-tabler name="plus" style="width:15px;height:15px;margin-right:4px;"></i-tabler> Adaugă
+            </button>
+          </div>
+
+          <div *ngFor="let med of newRx.medications; let i = index"
+               style="background:#fff;border-radius:10px;padding:16px;margin-bottom:10px;border:1px solid #e2e8f0;">
+            <div class="d-flex align-items-center justify-content-between m-b-10">
+              <span style="font-size:.85rem;font-weight:700;color:#475569;">
+                <i-tabler name="pill" style="width:14px;height:14px;color:#2563eb;vertical-align:middle;margin-right:4px;"></i-tabler>
+                Medicament {{ i + 1 }}
+              </span>
+              <button mat-icon-button color="warn" (click)="removeMedication(i)"
+                      *ngIf="newRx.medications.length > 1">
+                <i-tabler name="trash" style="width:16px;height:16px;"></i-tabler>
+              </button>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Nume medicament *</mat-label>
+                  <input matInput [(ngModel)]="med.name" placeholder="ex: Paracetamol">
+                </mat-form-field>
+              </div>
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Doză *</mat-label>
+                  <input matInput [(ngModel)]="med.dose" placeholder="ex: 500mg">
+                </mat-form-field>
+              </div>
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Frecvență *</mat-label>
+                  <input matInput [(ngModel)]="med.frequency" placeholder="ex: de 3 ori/zi">
+                </mat-form-field>
+              </div>
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Durată *</mat-label>
+                  <input matInput [(ngModel)]="med.duration" placeholder="ex: 7 zile">
+                </mat-form-field>
+              </div>
+              <div class="col-12">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Note (opțional)</mat-label>
+                  <input matInput [(ngModel)]="med.notes" placeholder="ex: după masă">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100 m-t-4" subscriptSizing="dynamic">
+            <mat-label>Note generale (opțional)</mat-label>
+            <textarea matInput [(ngModel)]="newRx.notes" rows="2" placeholder="Observații suplimentare..."></textarea>
+          </mat-form-field>
+
+          <div class="d-flex gap-8 m-t-12" style="flex-wrap:wrap;align-items:center;">
+            <button mat-flat-button color="primary" (click)="savePrescription()"
+                    [disabled]="saving" style="border-radius:8px;">
+              <i-tabler name="check" style="width:16px;height:16px;margin-right:5px;"></i-tabler>
+              {{ saving ? 'Se emite...' : 'Emite prescripția' }}
+            </button>
+            <button mat-stroked-button (click)="showForm = false" style="border-radius:8px;">Anulează</button>
+
+            <!-- Save as template -->
+            <span style="flex:1;"></span>
+            <div *ngIf="!showSaveTemplateInput">
+              <button mat-stroked-button color="accent" (click)="showSaveTemplateInput = true"
+                      style="border-radius:8px;font-size:.8rem;">
+                <i-tabler name="device-floppy" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+                Salvează ca template
+              </button>
+            </div>
+            <div *ngIf="showSaveTemplateInput" style="display:flex;align-items:center;gap:8px;">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width:200px;">
+                <mat-label>Nume template</mat-label>
+                <input matInput [(ngModel)]="newTemplateName" placeholder="ex: Antibiotic standard">
+              </mat-form-field>
+              <button mat-flat-button color="accent" (click)="saveAsTemplate()"
+                      [disabled]="savingTemplate || !newTemplateName.trim()" style="border-radius:8px;">
+                {{ savingTemplate ? 'Salvare...' : 'Salvează' }}
+              </button>
+              <button mat-icon-button (click)="showSaveTemplateInput = false; newTemplateName = ''">
+                <i-tabler name="x" style="width:16px;height:16px;"></i-tabler>
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <!-- ── Lista prescripții ──────────────────────────────────────────────── -->
+      <mat-card-content style="padding:16px 24px 24px;">
+
+        <app-skeleton *ngIf="loading" [rows]="3" [card]="true" [title]="true"></app-skeleton>
+
+        <!-- Empty -->
+        <div *ngIf="!loading && prescriptions.length === 0"
+             style="display:flex;flex-direction:column;align-items:center;padding:56px 24px;gap:14px;">
+          <div style="width:72px;height:72px;border-radius:18px;background:#eff6ff;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="pill-off" style="width:34px;height:34px;color:#2563eb;opacity:.45;"></i-tabler>
+          </div>
+          <div style="text-align:center;">
+            <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Nicio prescripție înregistrată</p>
+            <p style="margin:6px 0 0;font-size:.85rem;color:#64748b;">
+              Prescripțiile emise de medic vor apărea aici.
+            </p>
+          </div>
+        </div>
+
+        <!-- Card grid -->
+        <div *ngIf="!loading && prescriptions.length > 0" class="ml-rx-grid">
+
+          <div *ngFor="let rx of prescriptions" class="ml-rx-card">
+
+            <!-- Top strip -->
+            <div style="height:4px;background:linear-gradient(90deg,#2563eb,#3b82f6);border-radius:12px 12px 0 0;"></div>
+
+            <!-- Card head -->
+            <div style="padding:14px 16px 10px;display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:38px;height:38px;border-radius:10px;background:#eff6ff;flex-shrink:0;
+                          display:flex;align-items:center;justify-content:center;">
+                <i-tabler name="pill" style="width:18px;height:18px;color:#2563eb;"></i-tabler>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <p style="margin:0;font-size:.93rem;font-weight:700;color:#1e293b;">
+                  {{ currentRole === 'doctor'
+                      ? rx.patient_name
+                      : ('Dr. ' + (rx.doctor_name || '—')) }}
+                </p>
+                <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                  <i-tabler name="calendar" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;"></i-tabler>
+                  {{ rx.issued_at ? (rx.issued_at | date:'dd.MM.yyyy') : '—' }}
+                  &nbsp;·&nbsp;
+                  <i-tabler name="pill" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;"></i-tabler>
+                  {{ rx.medications.length }}
+                  {{ rx.medications.length === 1 ? 'medicament' : 'medicamente' }}
+                </p>
+              </div>
+
+              <!-- PDF button -->
+              <button mat-stroked-button color="primary" (click)="exportPdf(rx.id); $event.stopPropagation()"
+                      style="border-radius:8px;font-size:.78rem;min-width:auto;padding:0 10px;height:34px;">
+                <i-tabler name="file-type-pdf" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+                PDF
+              </button>
+            </div>
+
+            <!-- Medication chips -->
+            <div style="padding:0 16px 10px;display:flex;flex-wrap:wrap;gap:6px;">
+              <span *ngFor="let m of rx.medications" class="ml-med-chip">
+                <i-tabler name="pill" style="width:11px;height:11px;"></i-tabler>
+                {{ m.name }} {{ m.dose }}
+              </span>
+            </div>
+
+            <!-- Expanded: medication details -->
+            <div *ngIf="expandedId === rx.id" style="padding:0 16px 12px;">
+              <div *ngFor="let m of rx.medications; let i = index" class="ml-med-row">
+                <div style="width:26px;height:26px;border-radius:7px;background:#eff6ff;flex-shrink:0;
+                            display:flex;align-items:center;justify-content:center;">
+                  <i-tabler name="pill" style="width:13px;height:13px;color:#2563eb;"></i-tabler>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <p style="margin:0;font-size:.88rem;font-weight:700;color:#1e293b;">{{ m.name }} — {{ m.dose }}</p>
+                  <p style="margin:1px 0 0;font-size:.78rem;color:#64748b;">
+                    {{ m.frequency }} · {{ m.duration }}
+                    <span *ngIf="m.notes"> · {{ m.notes }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div *ngIf="rx.notes" style="margin-top:6px;padding:9px 12px;border-radius:8px;
+                                            background:#fffbeb;border:1px solid #fde68a;">
+                <p style="margin:0 0 2px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.4px;color:#92400e;">Note generale</p>
+                <p style="margin:0;font-size:.85rem;color:#78350f;">{{ rx.notes }}</p>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:7px 16px 11px;border-top:1px solid #f1f5f9;
+                        display:flex;align-items:center;justify-content:space-between;cursor:pointer;"
+                 (click)="toggleExpand(rx.id)">
+              <span style="font-size:.72rem;color:#cbd5e1;">{{ rx.id | slice:0:8 }}…</span>
+              <span style="font-size:.73rem;font-weight:600;color:#2563eb;">
+                {{ expandedId === rx.id ? 'Restrânge ▲' : 'Detalii ▼' }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,251 @@
+<div class="onboarding-wrapper"
+     style="min-height:100vh; display:flex; align-items:center; justify-content:center;
+            background: linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%); padding: 24px;">
+
+  <mat-card style="max-width:640px; width:100%; border-radius:16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);">
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    <mat-card-header style="padding: 32px 32px 0; flex-direction:column; align-items:center; text-align:center;">
+      <div style="width:72px; height:72px; border-radius:50%; background:#1976d2;
+                  display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+        <i-tabler name="heart-handshake" style="color:#fff; width:36px; height:36px;"></i-tabler>
+      </div>
+      <mat-card-title style="font-size:1.6rem; font-weight:700; color:#1a237e;">
+        Bine ai venit în MediLink!
+      </mat-card-title>
+      <mat-card-subtitle style="font-size:1rem; margin-top:8px; color:#546e7a;">
+        Hai să completăm profilul tău în câțiva pași simpli.
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content style="padding: 24px 32px 32px;">
+
+      <mat-stepper #stepper linear="false" orientation="horizontal"
+                   style="background:transparent;">
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- STEP 1 — Date personale                                        -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <mat-step label="Date personale" [stepControl]="personalForm">
+          <form [formGroup]="personalForm" (ngSubmit)="savePersonal()">
+
+            <p style="color:#546e7a; margin: 16px 0 20px; font-size:.95rem;">
+              Aceste date ajută medicii să te identifice corect și să te contacteze.
+            </p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Prenume</mat-label>
+                <input matInput formControlName="first_name" placeholder="ex. Ion">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Nume</mat-label>
+                <input matInput formControlName="last_name" placeholder="ex. Popescu">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
+              <mat-label>Telefon</mat-label>
+              <input matInput formControlName="phone" placeholder="ex. +40 721 000 000">
+              <mat-icon matPrefix>phone</mat-icon>
+              @if (personalForm.get('phone')?.errors?.['phoneInvalid'] && personalForm.get('phone')?.touched) {
+                <mat-error>Număr de telefon invalid (7–20 caractere).</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
+              <mat-label>Data nașterii</mat-label>
+              <input matInput type="date" formControlName="birth_date">
+              <mat-icon matPrefix>cake</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
+              <mat-label>Adresă</mat-label>
+              <input matInput formControlName="address" placeholder="ex. Str. Florilor 12, Cluj-Napoca">
+              <mat-icon matPrefix>home</mat-icon>
+            </mat-form-field>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
+              <button mat-stroked-button type="button" (click)="skipPersonal()" style="color:#78909c;">
+                Completez mai târziu
+              </button>
+              <button mat-raised-button color="primary" type="submit"
+                      [disabled]="savingPersonal">
+                @if (savingPersonal) {
+                  <mat-spinner diameter="20" style="display:inline-block; margin-right:8px;"></mat-spinner>
+                }
+                Salvează și continuă
+                <i-tabler name="arrow-right" style="margin-left:4px;"></i-tabler>
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- STEP 2 — Date medicale                                         -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <mat-step label="Date medicale" [stepControl]="medicalForm">
+          <form [formGroup]="medicalForm" (ngSubmit)="saveMedical()">
+
+            <p style="color:#546e7a; margin: 16px 0 20px; font-size:.95rem;">
+              Informațiile medicale sunt confidențiale și ajută medicii în situații de urgență.
+            </p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Grupă sanguină</mat-label>
+                <mat-select formControlName="blood_type">
+                  <mat-option value="">— Neselectat —</mat-option>
+                  @for (bt of bloodTypes; track bt) {
+                    <mat-option [value]="bt">{{ bt }}</mat-option>
+                  }
+                </mat-select>
+                <mat-icon matPrefix>drop</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Gen</mat-label>
+                <mat-select formControlName="gender">
+                  <mat-option value="">— Neselectat —</mat-option>
+                  <mat-option value="M">Masculin</mat-option>
+                  <mat-option value="F">Feminin</mat-option>
+                  <mat-option value="Altul">Altul</mat-option>
+                </mat-select>
+                <mat-icon matPrefix>gender-bigender</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
+              <mat-label>CNP</mat-label>
+              <input matInput formControlName="cnp" placeholder="13 cifre" maxlength="13">
+              <mat-icon matPrefix>id-badge</mat-icon>
+              @if (medicalForm.get('cnp')?.errors?.['cnpInvalid'] && medicalForm.get('cnp')?.touched) {
+                <mat-error>CNP-ul trebuie să conțină exact 13 cifre.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
+              <mat-label>Alergii cunoscute</mat-label>
+              <textarea matInput formControlName="allergies" rows="2"
+                        placeholder="ex. Penicilină, Polen, Alune..."></textarea>
+              <mat-icon matPrefix>allergy</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
+              <mat-label>Afecțiuni cronice</mat-label>
+              <textarea matInput formControlName="chronic_conditions" rows="2"
+                        placeholder="ex. Diabet tip 2, Hipertensiune..."></textarea>
+              <mat-icon matPrefix>activity-heartbeat</mat-icon>
+            </mat-form-field>
+
+            <!-- Emergency contact -->
+            <p style="font-weight:600; color:#37474f; margin: 16px 0 8px;">
+              <i-tabler name="sos" style="vertical-align:middle; margin-right:4px; color:#e53935;"></i-tabler>
+              Contact de urgență (opțional)
+            </p>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Nume contact urgență</mat-label>
+                <input matInput formControlName="emergency_contact">
+                <mat-icon matPrefix>user-heart</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Telefon urgență</mat-label>
+                <input matInput formControlName="emergency_phone">
+                <mat-icon matPrefix>phone-call</mat-icon>
+                @if (medicalForm.get('emergency_phone')?.errors?.['phoneInvalid'] && medicalForm.get('emergency_phone')?.touched) {
+                  <mat-error>Număr invalid.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px;">
+              <button mat-stroked-button type="button" (click)="skipMedical()" style="color:#78909c;">
+                Completez mai târziu
+              </button>
+              <div style="display:flex; gap:12px;">
+                <button mat-stroked-button type="button" matStepperPrevious>
+                  <i-tabler name="arrow-left" style="margin-right:4px;"></i-tabler>
+                  Înapoi
+                </button>
+                <button mat-raised-button color="primary" type="submit"
+                        [disabled]="savingMedical">
+                  @if (savingMedical) {
+                    <mat-spinner diameter="20" style="display:inline-block; margin-right:8px;"></mat-spinner>
+                  }
+                  Salvează și continuă
+                  <i-tabler name="arrow-right" style="margin-left:4px;"></i-tabler>
+                </button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- STEP 3 — Finalizare                                             -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <mat-step label="Gata!">
+          <div style="text-align:center; padding: 32px 16px;">
+
+            <!-- Success illustration -->
+            <div style="width:100px; height:100px; border-radius:50%;
+                        background: linear-gradient(135deg, #43a047, #66bb6a);
+                        display:flex; align-items:center; justify-content:center;
+                        margin: 0 auto 24px; box-shadow: 0 4px 20px rgba(67,160,71,.35);">
+              <i-tabler name="circle-check" style="color:#fff; width:52px; height:52px;"></i-tabler>
+            </div>
+
+            <h2 style="font-size:1.5rem; font-weight:700; color:#1b5e20; margin:0 0 12px;">
+              Profilul tău este configurat!
+            </h2>
+
+            <p style="color:#546e7a; font-size:1rem; max-width:420px; margin:0 auto 32px; line-height:1.6;">
+              Acum poți folosi toate funcțiile MediLink — programări online,
+              fișă medicală electronică, consulturi video și multe altele.
+            </p>
+
+            <!-- Feature highlights -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:32px; text-align:left;">
+              <div style="padding:16px; border-radius:12px; background:#e3f2fd; border:1px solid #bbdefb;">
+                <i-tabler name="calendar-event" style="color:#1976d2; width:28px; height:28px;"></i-tabler>
+                <p style="font-weight:600; margin:8px 0 4px; color:#0d47a1; font-size:.9rem;">Programări</p>
+                <p style="color:#546e7a; font-size:.82rem; margin:0;">Rezervă consultații online la orice oră.</p>
+              </div>
+              <div style="padding:16px; border-radius:12px; background:#fce4ec; border:1px solid #f8bbd0;">
+                <i-tabler name="notes-medical" style="color:#c62828; width:28px; height:28px;"></i-tabler>
+                <p style="font-weight:600; margin:8px 0 4px; color:#b71c1c; font-size:.9rem;">Fișă medicală</p>
+                <p style="color:#546e7a; font-size:.82rem; margin:0;">Toate înregistrările tale într-un singur loc.</p>
+              </div>
+              <div style="padding:16px; border-radius:12px; background:#e8f5e9; border:1px solid #c8e6c9;">
+                <i-tabler name="video" style="color:#2e7d32; width:28px; height:28px;"></i-tabler>
+                <p style="font-weight:600; margin:8px 0 4px; color:#1b5e20; font-size:.9rem;">Teleconsultație</p>
+                <p style="color:#546e7a; font-size:.82rem; margin:0;">Consultații video cu medicul tău.</p>
+              </div>
+            </div>
+
+            <!-- CTA buttons -->
+            <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+              <button mat-stroked-button color="primary" (click)="goToDashboard()"
+                      style="font-size:1rem; padding:10px 24px;">
+                <i-tabler name="layout-dashboard" style="margin-right:6px;"></i-tabler>
+                Mergi la dashboard
+              </button>
+              <button mat-raised-button color="primary" (click)="goToAppointments()"
+                      style="font-size:1rem; padding:10px 24px;">
+                <i-tabler name="calendar-plus" style="margin-right:6px;"></i-tabler>
+                Fă prima programare
+              </button>
+            </div>
+
+          </div>
+        </mat-step>
+
+      </mat-stepper>
+    </mat-card-content>
+  </mat-card>
+</div>

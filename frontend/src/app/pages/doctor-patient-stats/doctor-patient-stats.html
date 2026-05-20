@@ -1,0 +1,176 @@
+<style>
+.ms-stat-card { border-radius: 12px; padding: 16px; border: 1px solid; }
+.ms-stat-card--blue  { background: #eff6ff; border-color: #dbeafe; }
+.ms-stat-card--amber { background: #fffbeb; border-color: #fde68a; }
+.ms-stat-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.ms-stat-icon   { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ms-stat-label  { font-size:.78rem; font-weight:600; color:#475569; }
+.ms-stat-value  { margin:0; font-size:1.8rem; font-weight:800; color:#1e293b; }
+.ms-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: .78rem; font-weight: 600; cursor: pointer;
+  border: 1.5px solid; transition: all .15s; user-select: none;
+}
+.ms-chip--off { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; }
+.ms-chart-card { background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; }
+.ms-chart-title { margin:0 0 10px; font-size:.82rem; font-weight:700; color:#475569; }
+.ms-empty-state {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  height:160px; color:#cbd5e1; font-size:.82rem; gap:8px;
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+
+      <!-- ── Header ─────────────────────────────────────────────────────────── -->
+      <div style="padding:20px 24px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+
+        <!-- Icon + title -->
+        <div style="width:44px;height:44px;border-radius:12px;
+                    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i-tabler name="chart-bar" style="width:22px;height:22px;color:#fff;"></i-tabler>
+        </div>
+        <div>
+          <p style="margin:0;font-size:1.1rem;font-weight:800;color:#1e293b;">Statistici semne vitale</p>
+          <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+            {{ selectedPatient ? patientName(selectedPatient) : 'Selectează un pacient' }}
+          </p>
+        </div>
+
+        <span style="flex:1;"></span>
+
+        <!-- Patient selector -->
+        <mat-form-field appearance="outline" subscriptSizing="dynamic"
+                        style="min-width:220px;max-width:280px;margin:0;">
+          <mat-label>
+            <i-tabler name="user" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i-tabler>
+            Pacient
+          </mat-label>
+          <mat-select [ngModel]="selectedPatient" (ngModelChange)="onPatientChange($event)"
+                      [disabled]="loadingPats">
+            <mat-option *ngFor="let p of patients" [value]="p">{{ patientName(p) }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-card-content style="padding:16px 24px 24px;">
+
+        <!-- ── No patient selected ────────────────────────────────────────── -->
+        <div *ngIf="!selectedPatient"
+             style="display:flex;flex-direction:column;align-items:center;padding:48px 24px;gap:12px;text-align:center;">
+          <div style="width:64px;height:64px;border-radius:16px;background:#eff6ff;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="user-search" style="width:32px;height:32px;color:#2563eb;"></i-tabler>
+          </div>
+          <p style="margin:0;font-size:.95rem;font-weight:700;color:#1e293b;">Niciun pacient selectat</p>
+          <p style="margin:4px 0 0;font-size:.83rem;color:#64748b;">
+            Selectează un pacient din meniul de mai sus pentru a vedea statisticile.
+          </p>
+        </div>
+
+        <!-- ── Loading ────────────────────────────────────────────────────── -->
+        <app-skeleton *ngIf="loading" [rows]="4" [card]="true" [title]="true"></app-skeleton>
+
+        <!-- ── Content ────────────────────────────────────────────────────── -->
+        <ng-container *ngIf="!loading && selectedPatient">
+
+          <!-- Stat cards -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+                      gap:12px;margin-bottom:20px;">
+            <div class="ms-stat-card ms-stat-card--blue">
+              <div class="ms-stat-header">
+                <div class="ms-stat-icon" style="background:#2563eb;">
+                  <i-tabler name="heart-pulse" style="width:18px;height:18px;color:#fff;"></i-tabler>
+                </div>
+                <span class="ms-stat-label">Total măsurători</span>
+              </div>
+              <p class="ms-stat-value">{{ totalVitals }}</p>
+            </div>
+            <div class="ms-stat-card ms-stat-card--amber">
+              <div class="ms-stat-header">
+                <div class="ms-stat-icon" style="background:#f59e0b;">
+                  <i-tabler name="clock" style="width:18px;height:18px;color:#fff;"></i-tabler>
+                </div>
+                <span class="ms-stat-label">Ultima măsurătoare</span>
+              </div>
+              <p class="ms-stat-value" style="font-size:1.05rem;line-height:1.4;">{{ lastMeasurement }}</p>
+            </div>
+          </div>
+
+          <!-- No vitals state -->
+          <div *ngIf="vitals.length === 0"
+               style="text-align:center;padding:40px;color:#94a3b8;">
+            <i-tabler name="heart-off" style="width:42px;height:42px;color:#cbd5e1;display:block;margin:0 auto 12px;"></i-tabler>
+            <p style="margin:0;font-size:.88rem;">Nu există semne vitale înregistrate pentru acest pacient.</p>
+          </div>
+
+          <ng-container *ngIf="vitals.length > 0">
+            <!-- Chip toggles -->
+            <div style="margin-bottom:16px;">
+              <p style="margin:0 0 10px;font-size:.78rem;font-weight:700;color:#475569;
+                        text-transform:uppercase;letter-spacing:.4px;">
+                Afișează grafice pentru:
+              </p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <span *ngFor="let cfg of vitalConfig"
+                      class="ms-chip"
+                      [class.ms-chip--off]="!isSelected(cfg.type)"
+                      [style.background]="isSelected(cfg.type) ? cfg.color + '15' : ''"
+                      [style.borderColor]="isSelected(cfg.type) ? cfg.color : ''"
+                      [style.color]="isSelected(cfg.type) ? cfg.color : ''"
+                      (click)="toggleType(cfg.type)">
+                  <i-tabler [name]="cfg.icon" style="width:13px;height:13px;"></i-tabler>
+                  {{ cfg.label }}
+                  <span *ngIf="!hasData(cfg.type)" style="font-size:.65rem;opacity:.6;">(fără date)</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Charts grid -->
+            <div *ngIf="activeConfigs.length > 0"
+                 style="display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px;">
+              <div *ngFor="let cfg of activeConfigs" class="ms-chart-card">
+                <p class="ms-chart-title">
+                  <span style="display:inline-flex;align-items:center;gap:5px;">
+                    <span style="width:10px;height:10px;border-radius:50%;display:inline-block;"
+                          [style.background]="cfg.color"></span>
+                    {{ cfg.label }}
+                    <span style="font-weight:400;color:#94a3b8;">({{ cfg.unit }})</span>
+                  </span>
+                </p>
+                <div *ngIf="hasData(cfg.type)">
+                  <apx-chart
+                    [series]="vitalCharts[cfg.type].series"
+                    [chart]="vitalCharts[cfg.type].chart"
+                    [stroke]="vitalCharts[cfg.type].stroke"
+                    [markers]="vitalCharts[cfg.type].markers"
+                    [xaxis]="vitalCharts[cfg.type].xaxis"
+                    [yaxis]="vitalCharts[cfg.type].yaxis"
+                    [colors]="vitalCharts[cfg.type].colors"
+                    [grid]="vitalCharts[cfg.type].grid"
+                    [tooltip]="vitalCharts[cfg.type].tooltip">
+                  </apx-chart>
+                </div>
+                <div *ngIf="!hasData(cfg.type)" class="ms-empty-state">
+                  <i-tabler name="chart-line-off" style="width:30px;height:30px;"></i-tabler>
+                  <span>Nicio măsurătoare înregistrată</span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="activeConfigs.length === 0"
+                 style="text-align:center;padding:40px;color:#94a3b8;">
+              <i-tabler name="chart-off" style="width:40px;height:40px;color:#cbd5e1;display:block;margin:0 auto 10px;"></i-tabler>
+              <p style="margin:0;font-size:.85rem;">Selectează cel puțin un tip de semn vital din filtrele de mai sus.</p>
+            </div>
+          </ng-container>
+
+        </ng-container>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,241 @@
+<div class="row">
+  <!-- Buton înapoi -->
+  <div class="col-12 m-b-16">
+    <button mat-stroked-button (click)="goBack()">
+      <i-tabler name="arrow-left" class="m-r-8"></i-tabler>
+      Înapoi la programări
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="col-12" *ngIf="loading">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-24">
+        <app-skeleton [rows]="5" [card]="false" [title]="true"></app-skeleton>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Not found -->
+  <div class="col-12" *ngIf="!loading && notFound">
+    <mat-card class="cardWithShadow">
+      <mat-card-content class="p-48 text-center">
+        <i-tabler name="user-off" class="icon-64 text-muted m-b-16"></i-tabler>
+        <h4 class="mat-headline-6 m-0">Profil indisponibil</h4>
+        <p class="mat-body-2 text-muted m-t-8">Profilul acestui doctor nu a putut fi găsit.</p>
+        <button mat-flat-button color="primary" class="m-t-16" (click)="goBack()">
+          Înapoi la programări
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Profil doctor -->
+  <ng-container *ngIf="!loading && !notFound && doctor">
+
+    <!-- Card principal — avatar + info de bază -->
+    <div class="col-lg-4 col-12 m-b-24">
+      <mat-card class="cardWithShadow">
+        <mat-card-content class="p-32 text-center">
+          <!-- Avatar mare cu inițiale -->
+          <div class="d-flex justify-content-center m-b-20">
+            <div style="
+              width:96px; height:96px; border-radius:50%;
+              background: #1976d2; color:#fff;
+              display:flex; align-items:center; justify-content:center;
+              font-size:32px; font-weight:700; letter-spacing:1px;">
+              {{ getInitials() }}
+            </div>
+          </div>
+
+          <h4 class="mat-headline-6 f-w-700 m-0">Dr. {{ getFullName() }}</h4>
+
+          <mat-chip class="m-t-12" style="background:var(--mat-sys-primary-container);color:var(--mat-sys-on-primary-container);font-weight:600;">
+            {{ doctor.specialization || 'Specialization necompletată' }}
+          </mat-chip>
+
+          <div *ngIf="doctor.department" class="m-t-8">
+            <span class="mat-body-2 text-muted">
+              <i-tabler name="building-hospital" style="width:14px;height:14px;vertical-align:middle;"></i-tabler>
+              {{ doctor.department }}
+            </span>
+          </div>
+
+          <!-- Buton programare rapidă -->
+          <button mat-flat-button color="primary" class="w-100 m-t-24"
+                  (click)="goBack()">
+            <i-tabler name="calendar-plus" class="m-r-8"></i-tabler>
+            Programează consultație
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Card detalii -->
+    <div class="col-lg-8 col-12 m-b-24">
+      <mat-card class="cardWithShadow">
+        <mat-card-header class="p-16">
+          <div class="d-flex align-items-center gap-8">
+            <i-tabler name="id-badge" class="text-primary"></i-tabler>
+            <mat-card-title class="m-0">Informații profesionale</mat-card-title>
+          </div>
+        </mat-card-header>
+        <mat-card-content class="p-24">
+
+          <!-- Bio -->
+          <div *ngIf="doctor.bio" class="m-b-24">
+            <p class="mat-subtitle-2 f-w-600 m-b-8">Despre</p>
+            <p class="mat-body-1" style="line-height:1.7;">{{ doctor.bio }}</p>
+          </div>
+
+          <mat-divider *ngIf="doctor.bio" class="m-b-24"></mat-divider>
+
+          <!-- Grid info -->
+          <div class="row">
+            <div class="col-md-6 m-b-16" *ngIf="doctor.schedule">
+              <div class="d-flex align-items-start gap-12">
+                <div class="bg-light-primary rounded p-10 flex-shrink-0">
+                  <i-tabler name="clock" class="icon-22 text-primary"></i-tabler>
+                </div>
+                <div>
+                  <p class="mat-caption text-muted m-0 m-b-4">Program de lucru</p>
+                  <p class="mat-body-2 f-w-600 m-0" style="white-space:pre-line">{{ doctor.schedule }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 m-b-16" *ngIf="doctor.phone_cabinet">
+              <div class="d-flex align-items-start gap-12">
+                <div class="bg-light-success rounded p-10 flex-shrink-0">
+                  <i-tabler name="phone" class="icon-22 text-success"></i-tabler>
+                </div>
+                <div>
+                  <p class="mat-caption text-muted m-0 m-b-4">Telefon cabinet</p>
+                  <p class="mat-body-2 f-w-600 m-0">{{ doctor.phone_cabinet }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 m-b-16" *ngIf="doctor.department">
+              <div class="d-flex align-items-start gap-12">
+                <div class="bg-light-warning rounded p-10 flex-shrink-0">
+                  <i-tabler name="building-hospital" class="icon-22 text-warning"></i-tabler>
+                </div>
+                <div>
+                  <p class="mat-caption text-muted m-0 m-b-4">Departament</p>
+                  <p class="mat-body-2 f-w-600 m-0">{{ doctor.department }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 m-b-16" *ngIf="doctor.license_number">
+              <div class="d-flex align-items-start gap-12">
+                <div class="bg-light-error rounded p-10 flex-shrink-0">
+                  <i-tabler name="certificate" class="icon-22 text-error"></i-tabler>
+                </div>
+                <div>
+                  <p class="mat-caption text-muted m-0 m-b-4">Număr licență</p>
+                  <p class="mat-body-2 f-w-600 m-0">{{ doctor.license_number }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mesaj dacă profilul nu e completat -->
+          <div *ngIf="!doctor.bio && !doctor.schedule && !doctor.phone_cabinet && !doctor.department"
+               class="text-center p-16">
+            <i-tabler name="info-circle" class="icon-32 text-muted m-b-8"></i-tabler>
+            <p class="mat-body-2 text-muted">Profilul acestui doctor nu este completat încă.</p>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recenzii pacienți -->
+    <div class="col-12 m-b-24">
+      <mat-card class="cardWithShadow">
+        <mat-card-header class="p-16">
+          <div class="d-flex align-items-center gap-8 flex-1">
+            <i-tabler name="star" class="text-warning"></i-tabler>
+            <mat-card-title class="m-0">Recenzii pacienți</mat-card-title>
+            <span class="flex-1-auto"></span>
+            <!-- Rating mediu -->
+            <div *ngIf="reviews.length > 0" class="d-flex align-items-center gap-8">
+              <div class="d-flex gap-4">
+                <ng-container *ngFor="let s of starsArray">
+                  <i-tabler [name]="avgRating >= s ? 'star-filled' : (avgRating >= s - 0.5 ? 'star-half' : 'star')"
+                            class="text-warning" style="width:18px;height:18px;"></i-tabler>
+                </ng-container>
+              </div>
+              <span class="mat-subtitle-2 f-w-700">{{ avgRating }}</span>
+              <span class="mat-caption text-muted">({{ reviews.length }} {{ reviews.length === 1 ? 'recenzie' : 'recenzii' }})</span>
+            </div>
+          </div>
+        </mat-card-header>
+        <mat-card-content class="p-16">
+          <!-- Feature 14: statistici sentiment -->
+          <div *ngIf="reviews.length > 0 && (sentimentStats.pozitiv + sentimentStats.neutru + sentimentStats.negativ) > 0"
+               class="d-flex gap-12 m-b-16 p-12"
+               style="border:1px solid var(--mat-sys-outline-variant);border-radius:8px;flex-wrap:wrap;">
+            <span class="mat-caption text-muted" style="align-self:center;font-weight:600;">Sentiment recenzii:</span>
+            <span *ngIf="sentimentStats.pozitiv > 0"
+                  style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
+                         background:#16a34a22;color:#16a34a;border:1px solid #16a34a44;">
+              😊 Pozitiv ({{ sentimentStats.pozitiv }})
+            </span>
+            <span *ngIf="sentimentStats.neutru > 0"
+                  style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
+                         background:#ca8a0422;color:#ca8a04;border:1px solid #ca8a0444;">
+              😐 Neutru ({{ sentimentStats.neutru }})
+            </span>
+            <span *ngIf="sentimentStats.negativ > 0"
+                  style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
+                         background:#dc262622;color:#dc2626;border:1px solid #dc262644;">
+              😞 Negativ ({{ sentimentStats.negativ }})
+            </span>
+          </div>
+
+          <div *ngIf="reviews.length === 0" class="text-center p-24">
+            <i-tabler name="star-off" class="icon-40 text-muted m-b-8"></i-tabler>
+            <p class="mat-body-2 text-muted">Nicio recenzie încă.</p>
+          </div>
+
+          <div *ngFor="let r of reviews; let last = last"
+               class="d-flex gap-12 p-y-16"
+               [style.border-bottom]="!last ? '1px solid var(--mat-sys-outline-variant)' : 'none'">
+            <!-- Avatar inițiale -->
+            <div style="width:40px;height:40px;border-radius:50%;
+                        background:var(--mat-sys-primary-container);color:var(--mat-sys-on-primary-container);
+                        display:flex;align-items:center;justify-content:center;font-size:14px;
+                        font-weight:700;flex-shrink:0;">
+              {{ (r.patient_name || 'A')[0].toUpperCase() }}
+            </div>
+            <div class="flex-1">
+              <div class="d-flex align-items-center gap-8 m-b-4" style="flex-wrap:wrap;">
+                <span class="mat-body-2 f-w-600">{{ r.patient_name || 'Pacient anonim' }}</span>
+                <div class="d-flex gap-2">
+                  <ng-container *ngFor="let s of starsArray">
+                    <i-tabler [name]="r.rating >= s ? 'star-filled' : 'star'"
+                              [class]="r.rating >= s ? 'text-warning' : 'text-muted'"
+                              style="width:14px;height:14px;"></i-tabler>
+                  </ng-container>
+                </div>
+                <!-- Feature 14: badge sentiment per recenzie -->
+                <span *ngIf="r.sentiment"
+                      [style.background]="sentimentBg(r.sentiment)"
+                      [style.color]="sentimentColor(r.sentiment)"
+                      style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;">
+                  {{ sentimentLabel(r.sentiment) }}
+                </span>
+                <span class="mat-caption text-muted">{{ r.created_at ? (r.created_at | date:'dd.MM.yyyy') : '' }}</span>
+              </div>
+              <p *ngIf="r.comment" class="mat-body-2 m-0" style="line-height:1.6;opacity:.85;">{{ r.comment }}</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </ng-container>
+</div>

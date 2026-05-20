@@ -1,0 +1,166 @@
+// ── Dark theme CSS variable overrides ───────────────────────────────────────
+// Applied when the root div has class "dark-theme" (full.component.html)
+// AND body[data-theme="dark"] for Material overlay components.
+
+html .dark-theme,
+body[data-theme="dark"] .cdk-overlay-container,
+body[data-theme="dark"] .cdk-overlay-backdrop {
+  color-scheme: dark;
+  --mat-sys-corner-small: 8px;
+  --mat-sys-corner-medium: 24px;
+
+  // ── Backgrounds
+  --mat-sys-background:              #0f1729;
+  --mat-sys-surface-bright:          #243258;
+  --mat-sys-surface:                 #1a2540;
+  --mat-sys-surface-container:       #1a2540;
+  --mat-sys-surface-container-low:   #162035;
+  --mat-sys-surface-container-high:  #1e2d4a;
+  --mat-sys-surface-container-lowest: rgba(255, 255, 255, 0.06);
+  --mat-sys-surface-variant:         #1e2d4a;
+  --mat-sys-inverse-surface:         #e2e8f0;
+
+  // ── Text
+  --mat-sys-on-background:           #e2e8f0;
+  --mat-sys-on-surface:              #e2e8f0;
+  --mat-sys-on-surface-variant:      #94a3b8;
+  --mat-sys-inverse-on-surface:      #111c2d;
+
+  // ── Borders
+  --mat-sys-outline:                 #2d3f5c;
+  --mat-sys-outline-variant:         #243258;
+
+  // ── Hover / focus states
+  --mdc-outlined-text-field-hover-outline-color:        #3d5278;
+  --mdc-checkbox-unselected-hover-state-layer-color:    #2d3f5c;
+  --mat-menu-item-hover-state-layer-color:              #243258;
+  --mat-standard-button-toggle-state-layer-color:       #243258;
+  --mat-option-focus-state-layer-color:                 #243258;
+  --mat-option-hover-state-layer-color:                 #243258;
+  --mdc-switch-unselected-track-color:                  #2d3f5c;
+  --mat-stepper-header-focus-state-layer-color:         #243258;
+  --mat-stepper-header-hover-state-layer-color:         #243258;
+  --mdc-dialog-supporting-text-color:                   #e2e8f0;
+  --mat-expansion-header-hover-state-layer-color:       #243258;
+
+  // ── Cards
+  --mdc-elevated-card-container-color:                  #1a2540;
+  --mat-card-elevated-container-color:                  #1a2540;
+  --mdc-outlined-card-outline-color:                    #2d3f5c;
+
+  // ── Tables
+  --mat-table-background-color:                         #1a2540;
+  --mat-table-row-item-outline-color:                   #2d3f5c;
+  --mat-table-header-headline-color:                    #94a3b8;
+  --mat-table-row-item-label-text-color:                #e2e8f0;
+  --mat-table-header-container-background-color:        #162035;
+  --mat-table-footer-container-background-color:        #162035;
+
+  // ── Inputs
+  --mdc-filled-text-field-container-color:              #1e2d4a;
+  --mat-form-field-filled-background-color:             #1e2d4a;
+  --mdc-outlined-text-field-outline-color:              #2d3f5c;
+  --mdc-outlined-text-field-label-text-color:           #94a3b8;
+  --mdc-outlined-text-field-input-text-color:           #e2e8f0;
+  --mdc-outlined-text-field-focus-label-text-color:     var(--mat-sys-primary);
+
+  // ── Toolbar / Header
+  --mat-toolbar-container-background-color:             #1a2540;
+  --mat-toolbar-container-text-color:                   #e2e8f0;
+
+  // ── Sidenav
+  --mat-sidenav-container-background-color:             #162035;
+  --mat-sidenav-content-background-color:               #0f1729;
+  --mat-sidenav-container-text-color:                   #e2e8f0;
+  --mat-sidenav-scrim-color:                            rgba(0, 0, 0, 0.6);
+
+  // ── Dialog
+  --mdc-dialog-container-color:                         #1a2540;
+  --mat-dialog-container-color:                         #1a2540;
+
+  // ── Chips
+  --mat-chip-elevated-container-color:                  #243258;
+  --mat-chip-label-text-color:                          #e2e8f0;
+
+  // ── Select & Option
+  --mat-select-panel-background-color:                  #1a2540;
+  --mat-select-enabled-trigger-text-color:              #e2e8f0;
+  --mat-option-selected-state-label-text-color:         var(--mat-sys-primary);
+
+  // ── Menu (dropdowns)
+  --mat-menu-container-color:                           #1a2540;
+  --mat-menu-item-label-text-color:                     #e2e8f0;
+  --mat-menu-item-icon-color:                           #94a3b8;
+
+  // ── Tabs
+  --mat-tab-header-inactive-label-text-color:           #94a3b8;
+  --mat-tab-header-active-label-text-color:             var(--mat-sys-primary);
+
+  // ── Progress bar
+  --mdc-linear-progress-track-color:                    #2d3f5c;
+
+  // ── Divider
+  --mat-divider-color:                                  #2d3f5c;
+
+  // ── Badge
+  --mat-badge-background-color:                         #ef4444;
+
+  // ── Snackbar
+  --mat-snack-bar-button-color:                         var(--mat-sys-primary);
+  --mdc-snackbar-container-color:                       #243258;
+  --mdc-snackbar-supporting-text-color:                 #e2e8f0;
+
+  // ── Paginator
+  --mat-paginator-container-background-color:           #1a2540;
+  --mat-paginator-enabled-icon-color:                   #94a3b8;
+}
+
+// ── Global dark mode overrides (inside .dark-theme div) ─────────────────────
+.dark-theme {
+  background-color: #0f1729;
+  color: #e2e8f0;
+
+  // Mat drawer container background
+  .mat-drawer-container {
+    background-color: #0f1729 !important;
+    color: #e2e8f0;
+  }
+
+  // Muted text helper class
+  .text-muted { color: #94a3b8 !important; }
+
+  // Light background variants — adjusted for dark backgrounds
+  .bg-light-primary  { background-color: rgba(0, 161, 255, 0.15) !important; }
+  .bg-light-secondary{ background-color: rgba(22, 205, 199, 0.15) !important; }
+  .bg-light-success  { background-color: rgba(22, 205, 199, 0.15) !important; }
+  .bg-light-warning  { background-color: rgba(255, 152, 0,   0.18) !important; }
+  .bg-light-error    { background-color: rgba(239, 68, 68,   0.15) !important; }
+  .bg-light-accent   { background-color: rgba(22, 205, 199, 0.15) !important; }
+
+  // Hard-coded inline border colors in dashboard templates
+  [style*="#f0f0f0"] { border-bottom-color: #2d3f5c !important; }
+
+  // Doctor profile card accent border
+  .cardWithShadow[style*="border-left"] {
+    border-left-color: #1976d2 !important;
+  }
+
+  // Notification menu overrides
+  .notif-menu,
+  .topbar-dd {
+    background-color: #1a2540 !important;
+    color: #e2e8f0 !important;
+  }
+  .notif-header { border-bottom-color: #2d3f5c !important; }
+  .notif-item   { border-bottom-color: #2d3f5c !important; }
+  .notif-unread { background-color: rgba(0, 161, 255, 0.08) !important; }
+
+  // Status badge text visibility
+  .status-badge { filter: brightness(1.15); }
+
+  // Sidebar active nav item
+  .sidebar-list .mat-list-item.active,
+  .sidebar-list .mdc-list-item--activated {
+    background-color: rgba(0, 161, 255, 0.12) !important;
+  }
+}

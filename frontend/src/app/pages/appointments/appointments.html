@@ -1,0 +1,708 @@
+<style>
+/* ── Appointment cards ─────────────────────────────────────────────────── */
+.ml-appt-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: block;
+  transition: box-shadow .2s, transform .15s;
+  overflow: visible;
+  position: relative;
+}
+.ml-appt-card:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,.07);
+  transform: translateY(-1px);
+}
+.ml-appt-left-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+}
+.ml-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .73rem;
+  font-weight: 700;
+}
+.ml-date-box {
+  min-width: 70px;
+  text-align: center;
+  border-radius: 10px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+
+      <!-- ── Header ─────────────────────────────────────────────────────────── -->
+      <mat-card-header style="padding:20px 24px 0;flex-direction:column;align-items:stretch;">
+        <div class="d-flex align-items-center gap-12 m-b-16" style="flex-wrap:wrap;">
+
+          <div class="d-flex align-items-center gap-10">
+            <div style="width:42px;height:42px;border-radius:11px;
+                        background:linear-gradient(135deg,#2563eb,#7c3aed);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="calendar-event" style="color:#fff;width:20px;height:20px;"></i-tabler>
+            </div>
+            <div>
+              <mat-card-title style="margin:0;font-size:1.1rem;font-weight:700;">Programări</mat-card-title>
+              <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                {{ filteredAppointments.length }} din {{ appointments.length }} programări
+              </p>
+            </div>
+          </div>
+
+          <span style="flex:1;"></span>
+
+          <!-- Stats chips -->
+          <div class="d-flex gap-6" style="flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;
+                        background:#fffbeb;border-radius:8px;border:1px solid #fde68a;">
+              <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></div>
+              <span style="font-size:.75rem;color:#92400e;font-weight:700;">{{ pendingCount }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;
+                        background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;">
+              <div style="width:7px;height:7px;border-radius:50%;background:#2563eb;flex-shrink:0;"></div>
+              <span style="font-size:.75rem;color:#1e40af;font-weight:700;">{{ confirmedCount }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;padding:5px 10px;
+                        background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+              <div style="width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0;"></div>
+              <span style="font-size:.75rem;color:#14532d;font-weight:700;">{{ completedCount }}</span>
+            </div>
+          </div>
+
+          <!-- Buton programare nouă -->
+          <button mat-flat-button color="primary" *ngIf="currentRole === 'patient'"
+                  (click)="showForm = !showForm" style="border-radius:8px;">
+            <i-tabler [name]="showForm ? 'x' : 'calendar-plus'"
+                      style="margin-right:6px;width:17px;height:17px;"></i-tabler>
+            {{ showForm ? 'Anulează' : 'Programare nouă' }}
+          </button>
+        </div>
+
+        <!-- ── Filter bar ──────────────────────────────────────────────────── -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;">
+
+          <mat-form-field appearance="outline" style="min-width:150px;" subscriptSizing="dynamic">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
+              <mat-option value="all">Toate</mat-option>
+              <mat-option value="pending">În așteptare</mat-option>
+              <mat-option value="confirmed">Confirmate</mat-option>
+              <mat-option value="completed">Finalizate</mat-option>
+              <mat-option value="cancelled">Anulate</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="min-width:190px;" subscriptSizing="dynamic"
+                          *ngIf="currentRole !== 'patient'">
+            <mat-label>Doctor</mat-label>
+            <mat-select [(ngModel)]="filterDoctor" (ngModelChange)="applyFilters()">
+              <mat-option value="all">Toți doctorii</mat-option>
+              <mat-option *ngFor="let d of doctors" [value]="d.user_id">
+                {{ (d.first_name || d.last_name) ? d.first_name + ' ' + d.last_name : d.email }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="min-width:145px;" subscriptSizing="dynamic">
+            <mat-label>De la</mat-label>
+            <input matInput [matDatepicker]="pickerFrom" [(ngModel)]="filterDateFromMoment"
+                   (dateChange)="onFilterDateFrom($event)" placeholder="ZZ/LL/AAAA" readonly>
+            <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+            <mat-datepicker #pickerFrom></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="min-width:145px;" subscriptSizing="dynamic">
+            <mat-label>Până la</mat-label>
+            <input matInput [matDatepicker]="pickerTo" [(ngModel)]="filterDateToMoment"
+                   (dateChange)="onFilterDateTo($event)" placeholder="ZZ/LL/AAAA" readonly>
+            <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+            <mat-datepicker #pickerTo></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" style="min-width:155px;" subscriptSizing="dynamic">
+            <mat-label>Sortare</mat-label>
+            <mat-select [(ngModel)]="sortOrder" (ngModelChange)="applyFilters()">
+              <mat-option value="desc">Cele mai recente</mat-option>
+              <mat-option value="asc">Cele mai vechi</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-stroked-button color="warn" *ngIf="activeFilterCount > 0"
+                  (click)="resetFilters()" style="border-radius:8px;height:40px;">
+            <i-tabler name="filter-off" style="width:16px;height:16px;margin-right:5px;"></i-tabler>
+            Reset ({{ activeFilterCount }})
+          </button>
+        </div>
+      </mat-card-header>
+
+      <!-- ── Formular programare nouă ─────────────────────────────────────── -->
+      <mat-card-content *ngIf="showForm && currentRole === 'patient'"
+                        style="padding:0 24px 20px;">
+        <div style="background:#f8fafc;border-radius:12px;padding:20px 24px;border:1px solid #e2e8f0;">
+          <p style="margin:0 0 18px;font-size:.95rem;font-weight:700;color:#1e293b;">
+            <i-tabler name="calendar-plus" style="width:16px;height:16px;vertical-align:middle;
+                      margin-right:6px;color:#2563eb;"></i-tabler>
+            Programare nouă
+          </p>
+
+          <form [formGroup]="form" (ngSubmit)="saveAppointment()">
+
+            <mat-form-field appearance="outline" class="w-100 m-b-4" subscriptSizing="dynamic">
+              <mat-label>Doctor *</mat-label>
+              <mat-select formControlName="doctor_id">
+                <mat-option *ngFor="let d of doctors" [value]="d.user_id">
+                  {{ (d.first_name || d.last_name) ? d.first_name + ' ' + d.last_name : d.email }}
+                  — {{ d.specialization }}
+                </mat-option>
+              </mat-select>
+              <mat-error>Selectează un doctor</mat-error>
+            </mat-form-field>
+
+            <!-- Link profil -->
+            <div *ngIf="form.get('doctor_id')?.value" style="margin:-4px 0 12px;">
+              <a [routerLink]="['/dashboard/doctor', form.get('doctor_id')?.value]"
+                 style="font-size:.8rem;color:#2563eb;text-decoration:none;font-weight:600;
+                        display:inline-flex;align-items:center;gap:4px;">
+                <i-tabler name="user-circle" style="width:14px;height:14px;"></i-tabler>
+                Vezi profilul doctorului →
+              </a>
+            </div>
+
+            <!-- Feature 8 — Slot-uri populare -->
+            <div *ngIf="form.get('doctor_id')?.value && (loadingSlots || popularSlots.length > 0)"
+                 style="margin-bottom:16px;background:#eff6ff;border:1px solid #bfdbfe;
+                        border-radius:10px;padding:12px 14px;">
+              <p style="margin:0 0 8px;font-size:.8rem;font-weight:700;color:#1e40af;
+                        display:flex;align-items:center;gap:5px;">
+                <i-tabler name="clock-bolt" style="width:14px;height:14px;"></i-tabler>
+                Orare populare — click pentru a pre-completa
+              </p>
+              <div *ngIf="loadingSlots" style="font-size:.8rem;color:#64748b;">Se analizează istoricul…</div>
+              <div *ngIf="!loadingSlots" style="display:flex;flex-wrap:wrap;gap:7px;">
+                <button *ngFor="let slot of popularSlots" type="button"
+                        (click)="applySlot(slot)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;
+                               border-radius:20px;cursor:pointer;background:#fff;
+                               border:1px solid #bfdbfe;font-size:.78rem;font-weight:600;
+                               color:#2563eb;transition:all .15s;">
+                  <i-tabler name="clock" style="width:12px;height:12px;"></i-tabler>
+                  {{ slot.label }}
+                  <span style="font-size:.7rem;opacity:.6;">({{ slot.count }}×)</span>
+                </button>
+              </div>
+              <p *ngIf="!loadingSlots && popularSlots.length === 0"
+                 style="margin:0;font-size:.78rem;color:#64748b;">Date insuficiente pentru predicție.</p>
+            </div>
+
+            <!-- Feature 5 — Heatmap disponibilitate -->
+            <div *ngIf="form.get('doctor_id')?.value && (loadingHeatmap || weeklySlots.length > 0)"
+                 style="margin-bottom:16px;">
+
+              <!-- Header cu navigare săptămână -->
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:.82rem;font-weight:700;color:#475569;
+                             display:flex;align-items:center;gap:5px;">
+                  <i-tabler name="calendar-week" style="width:14px;height:14px;"></i-tabler>
+                  Disponibilitate săptămâna
+                </span>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <button type="button" mat-icon-button
+                          style="width:28px;height:28px;line-height:28px;"
+                          [disabled]="!canGoPrevWeek()"
+                          [style.opacity]="canGoPrevWeek() ? '1' : '0.3'"
+                          (click)="prevWeek(form.get('doctor_id')?.value)">
+                    <i-tabler name="chevron-left" style="width:14px;height:14px;"></i-tabler>
+                  </button>
+                  <span style="font-size:.75rem;color:#64748b;min-width:90px;text-align:center;">
+                    {{ heatmapWeekStart | date:'dd MMM' : '' : 'ro' }}
+                  </span>
+                  <button type="button" mat-icon-button
+                          style="width:28px;height:28px;line-height:28px;"
+                          (click)="nextWeek(form.get('doctor_id')?.value)">
+                    <i-tabler name="chevron-right" style="width:14px;height:14px;"></i-tabler>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Loading -->
+              <div *ngIf="loadingHeatmap" style="font-size:.78rem;color:#64748b;padding:8px 0;">
+                Se încarcă heatmap-ul…
+              </div>
+
+              <!-- Grid heatmap -->
+              <div *ngIf="!loadingHeatmap && weeklySlots.length > 0"
+                   style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:separate;border-spacing:3px;min-width:400px;">
+                  <thead>
+                    <tr>
+                      <th style="font-size:.7rem;color:#94a3b8;font-weight:600;padding:2px 6px;text-align:left;width:42px;">Ora</th>
+                      <th *ngFor="let day of weeklySlots"
+                          style="font-size:.7rem;color:#475569;font-weight:700;padding:2px 4px;text-align:center;min-width:56px;">
+                        {{ day.day_label }}<br>
+                        <span style="font-weight:400;color:#94a3b8;">{{ day.date | date:'dd/MM' }}</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let slot of weeklySlots[0]?.slots || []; let i = index">
+                      <td style="font-size:.68rem;color:#94a3b8;padding:1px 4px;white-space:nowrap;">
+                        {{ weeklySlots[0].slots[i].time }}
+                      </td>
+                      <td *ngFor="let day of weeklySlots"
+                          style="padding:1px;"
+                          [title]="day.slots[i].booked ? 'Ocupat' : 'Liber — click pentru a selecta'">
+                        <div
+                          [style.background]="day.slots[i].booked ? '#fecaca' : '#dcfce7'"
+                          [style.border]="day.slots[i].booked ? '1px solid #fca5a5' : '1px solid #86efac'"
+                          [style.cursor]="day.slots[i].booked ? 'not-allowed' : 'pointer'"
+                          [style.borderRadius]="'4px'"
+                          [style.height]="'18px'"
+                          [style.display]="'flex'"
+                          [style.alignItems]="'center'"
+                          [style.justifyContent]="'center'"
+                          (click)="!day.slots[i].booked && applyHeatmapSlot(day.date, day.slots[i].time)">
+                          <span *ngIf="day.slots[i].booked" style="font-size:.55rem;color:#ef4444;font-weight:700;">●</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p style="margin:6px 0 0;font-size:.7rem;color:#94a3b8;">
+                  <span style="display:inline-block;width:10px;height:10px;background:#dcfce7;border:1px solid #86efac;border-radius:2px;margin-right:3px;vertical-align:middle;"></span>Liber
+                  <span style="display:inline-block;width:10px;height:10px;background:#fecaca;border:1px solid #fca5a5;border-radius:2px;margin:0 3px 0 8px;vertical-align:middle;"></span>Ocupat
+                </p>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Data *</mat-label>
+                  <input matInput [matDatepicker]="picker" formControlName="date"
+                         placeholder="ZZ/LL/AAAA" [min]="minDate">
+                  <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                  <mat-error>Selectează data</mat-error>
+                </mat-form-field>
+              </div>
+              <div class="col-md-6">
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <mat-label>Ora * (HH:MM)</mat-label>
+                  <input matInput formControlName="time" placeholder="14:30" maxlength="5">
+                  <mat-error>Introduceți ora</mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100 m-t-4" subscriptSizing="dynamic">
+              <mat-label>Motiv consultație</mat-label>
+              <input matInput formControlName="reason" placeholder="ex: Control periodic">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100 m-t-4" subscriptSizing="dynamic">
+              <mat-label>Note suplimentare</mat-label>
+              <textarea matInput formControlName="notes" rows="2"
+                        placeholder="Simptome, întrebări pentru doctor…"></textarea>
+            </mat-form-field>
+
+            <div *ngIf="successMessage"
+                 style="margin-bottom:10px;color:#16a34a;font-size:.85rem;font-weight:600;">
+              ✓ {{ successMessage }}
+            </div>
+            <div *ngIf="errorMessage"
+                 style="margin-bottom:10px;color:#dc2626;font-size:.85rem;font-weight:600;">
+              ✗ {{ errorMessage }}
+            </div>
+
+            <div class="d-flex gap-8 m-t-4">
+              <button mat-flat-button color="primary" type="submit"
+                      [disabled]="saving || form.invalid" style="border-radius:8px;">
+                <i-tabler name="check" style="width:16px;height:16px;margin-right:5px;"></i-tabler>
+                {{ saving ? 'Se creează…' : 'Creează programarea' }}
+              </button>
+              <button mat-stroked-button type="button" (click)="showForm = false"
+                      style="border-radius:8px;">Anulează</button>
+            </div>
+          </form>
+        </div>
+      </mat-card-content>
+
+      <!-- ── Lista programări ────────────────────────────────────────────── -->
+      <mat-card-content style="padding:8px 24px 24px;">
+
+        <app-skeleton *ngIf="loading" [rows]="4" [card]="false" [title]="true"></app-skeleton>
+
+        <!-- Empty -->
+        <div *ngIf="!loading && appointments.length === 0"
+             style="display:flex;flex-direction:column;align-items:center;padding:56px 24px;gap:14px;">
+          <div style="width:72px;height:72px;border-radius:18px;background:#eff6ff;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="calendar-off" style="width:34px;height:34px;color:#2563eb;opacity:.45;"></i-tabler>
+          </div>
+          <div style="text-align:center;">
+            <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Nicio programare înregistrată</p>
+            <p style="margin:6px 0 0;font-size:.85rem;color:#64748b;">
+              Creează prima ta programare folosind butonul de mai sus.
+            </p>
+          </div>
+        </div>
+
+        <!-- No filter results -->
+        <div *ngIf="!loading && appointments.length > 0 && filteredAppointments.length === 0"
+             style="text-align:center;padding:36px;">
+          <i-tabler name="filter-off" style="width:34px;height:34px;color:#94a3b8;"></i-tabler>
+          <p style="margin:8px 0 0;color:#64748b;">Nicio programare pentru filtrele selectate.</p>
+          <button mat-stroked-button (click)="resetFilters()" style="margin-top:10px;border-radius:8px;">
+            Resetează filtrele
+          </button>
+        </div>
+
+        <!-- Cards list -->
+        <div *ngIf="!loading && filteredAppointments.length > 0">
+          <div *ngFor="let a of pagedAppointments" class="ml-appt-card">
+
+            <!-- Left status bar -->
+            <div class="ml-appt-left-bar"
+                 [style.background]="a.status === 'pending' ? '#f59e0b'
+                   : a.status === 'confirmed' ? '#2563eb'
+                   : a.status === 'completed' ? '#16a34a'
+                   : '#dc2626'">
+            </div>
+
+            <div style="padding:14px 16px 12px 20px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+
+              <!-- Date box -->
+              <div class="ml-date-box"
+                   [style.background]="a.status === 'pending' ? '#fffbeb'
+                     : a.status === 'confirmed' ? '#eff6ff'
+                     : a.status === 'completed' ? '#f0fdf4'
+                     : '#fef2f2'">
+                <p style="margin:0;font-size:1.3rem;font-weight:800;line-height:1;"
+                   [style.color]="a.status === 'pending' ? '#f59e0b'
+                     : a.status === 'confirmed' ? '#2563eb'
+                     : a.status === 'completed' ? '#16a34a'
+                     : '#dc2626'">
+                  {{ a.datetime | date:'dd' }}
+                </p>
+                <p style="margin:0;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;"
+                   [style.color]="a.status === 'pending' ? '#92400e'
+                     : a.status === 'confirmed' ? '#1e40af'
+                     : a.status === 'completed' ? '#14532d'
+                     : '#991b1b'">
+                  {{ a.datetime | date:'MMM' : '' : 'ro' }}
+                </p>
+                <p style="margin:2px 0 0;font-size:.78rem;font-weight:700;color:#475569;">
+                  {{ a.datetime | date:'HH:mm' }}
+                </p>
+              </div>
+
+              <!-- Main info -->
+              <div style="flex:1;min-width:200px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+
+                  <!-- Status badge -->
+                  <span class="ml-status-badge"
+                        [style.background]="a.status === 'pending' ? '#fffbeb'
+                          : a.status === 'confirmed' ? '#eff6ff'
+                          : a.status === 'completed' ? '#f0fdf4'
+                          : '#fef2f2'"
+                        [style.color]="a.status === 'pending' ? '#92400e'
+                          : a.status === 'confirmed' ? '#1e40af'
+                          : a.status === 'completed' ? '#14532d'
+                          : '#991b1b'"
+                        [style.border]="'1px solid ' + (a.status === 'pending' ? '#fde68a'
+                          : a.status === 'confirmed' ? '#bfdbfe'
+                          : a.status === 'completed' ? '#bbf7d0'
+                          : '#fecaca')">
+                    <div style="width:6px;height:6px;border-radius:50%;"
+                         [style.background]="a.status === 'pending' ? '#f59e0b'
+                           : a.status === 'confirmed' ? '#2563eb'
+                           : a.status === 'completed' ? '#16a34a'
+                           : '#dc2626'">
+                    </div>
+                    {{ a.status === 'pending' ? 'În așteptare'
+                       : a.status === 'confirmed' ? 'Confirmat'
+                       : a.status === 'completed' ? 'Finalizat'
+                       : 'Anulat' }}
+                  </span>
+
+                  <span style="font-size:.73rem;color:#94a3b8;">
+                    {{ a.datetime | date:'EEEE, d MMMM yyyy' : '' : 'ro' }}
+                  </span>
+                </div>
+
+                <!-- Doctor / Patient name -->
+                <p style="margin:0 0 3px;font-size:.92rem;font-weight:700;color:#1e293b;">
+                  <ng-container *ngIf="currentRole === 'patient'">
+                    <i-tabler name="stethoscope" style="width:14px;height:14px;color:#2563eb;vertical-align:middle;margin-right:4px;"></i-tabler>
+                    <a [routerLink]="['/dashboard/doctor', a.doctor_id]"
+                       style="color:#2563eb;text-decoration:none;font-weight:700;">
+                      Dr. {{ getDoctorName(a.doctor_id) }}
+                    </a>
+                  </ng-container>
+                  <ng-container *ngIf="currentRole === 'doctor'">
+                    <i-tabler name="user" style="width:14px;height:14px;color:#7c3aed;vertical-align:middle;margin-right:4px;"></i-tabler>
+                    {{ getPatientName(a.patient_id) }}
+                  </ng-container>
+                  <ng-container *ngIf="currentRole === 'admin' || currentRole === 'assistant'">
+                    <i-tabler name="stethoscope" style="width:14px;height:14px;color:#2563eb;vertical-align:middle;margin-right:4px;"></i-tabler>
+                    Dr. {{ getDoctorName(a.doctor_id) }}
+                    <span style="color:#94a3b8;font-weight:400;margin:0 4px;">→</span>
+                    <i-tabler name="user" style="width:14px;height:14px;color:#7c3aed;vertical-align:middle;margin-right:3px;"></i-tabler>
+                    {{ getPatientName(a.patient_id) }}
+                  </ng-container>
+                </p>
+
+                <!-- Reason + Notes -->
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+                  <span *ngIf="a.reason"
+                        style="font-size:.77rem;padding:2px 9px;border-radius:20px;
+                               background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">
+                    <i-tabler name="clipboard-text" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;"></i-tabler>
+                    {{ a.reason }}
+                  </span>
+                  <span *ngIf="a.notes"
+                        style="font-size:.77rem;padding:2px 9px;border-radius:20px;
+                               background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">
+                    <i-tabler name="notes" style="width:11px;height:11px;vertical-align:middle;margin-right:3px;"></i-tabler>
+                    {{ a.notes }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;">
+
+                <!-- ── Admin — butoane icon (același stil ca doctorul) ── -->
+
+                <!-- Confirmă (pending → confirmed) -->
+                <button mat-icon-button
+                        *ngIf="currentRole === 'admin' && a.status === 'pending'"
+                        (click)="updateStatus(a.id, 'confirmed')" matTooltip="Confirmă programarea"
+                        style="background:#f0fdf4;border-radius:9px;width:36px;height:36px;">
+                  <i-tabler name="check" style="width:17px;height:17px;color:#16a34a;"></i-tabler>
+                </button>
+
+                <!-- Anulează (pending / confirmed) -->
+                <button mat-icon-button
+                        *ngIf="currentRole === 'admin' && (a.status === 'pending' || a.status === 'confirmed')"
+                        (click)="updateStatus(a.id, 'cancelled')" matTooltip="Anulează programarea"
+                        style="background:#fef2f2;border-radius:9px;width:36px;height:36px;">
+                  <i-tabler name="x" style="width:17px;height:17px;color:#dc2626;"></i-tabler>
+                </button>
+
+                <!-- Finalizat badge (admin) -->
+                <span *ngIf="currentRole === 'admin' && a.status === 'completed'"
+                      style="font-size:.78rem;padding:4px 10px;border-radius:20px;
+                             background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;font-weight:700;">
+                  🏁 Finalizat
+                </span>
+
+                <!-- Anulat badge (admin) -->
+                <span *ngIf="currentRole === 'admin' && a.status === 'cancelled'"
+                      style="font-size:.78rem;padding:4px 10px;border-radius:20px;
+                             background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-weight:700;">
+                  ❌ Anulat
+                </span>
+
+                <!-- ── Doctor + Asistent — butoane icon ── -->
+
+                <!-- Confirmă (pending → confirmed) -->
+                <button mat-icon-button
+                        *ngIf="(currentRole === 'doctor' || currentRole === 'assistant') && a.status === 'pending'"
+                        (click)="updateStatus(a.id, 'confirmed')" matTooltip="Confirmă programarea"
+                        style="background:#f0fdf4;border-radius:9px;width:36px;height:36px;">
+                  <i-tabler name="check" style="width:17px;height:17px;color:#16a34a;"></i-tabler>
+                </button>
+
+                <!-- Anulează (pending / confirmed) -->
+                <button mat-icon-button
+                        *ngIf="(currentRole === 'doctor' || currentRole === 'assistant') && (a.status === 'pending' || a.status === 'confirmed')"
+                        (click)="updateStatus(a.id, 'cancelled')" matTooltip="Anulează programarea"
+                        style="background:#fef2f2;border-radius:9px;width:36px;height:36px;">
+                  <i-tabler name="x" style="width:17px;height:17px;color:#dc2626;"></i-tabler>
+                </button>
+
+                <!-- Finalizat badge (doctor + asistent) -->
+                <span *ngIf="(currentRole === 'doctor' || currentRole === 'assistant') && a.status === 'completed'"
+                      style="font-size:.78rem;padding:4px 10px;border-radius:20px;
+                             background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;font-weight:700;">
+                  🏁 Finalizat
+                </span>
+
+                <!-- Anulat badge (doctor + asistent) -->
+                <span *ngIf="(currentRole === 'doctor' || currentRole === 'assistant') && a.status === 'cancelled'"
+                      style="font-size:.78rem;padding:4px 10px;border-radius:20px;
+                             background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-weight:700;">
+                  ❌ Anulat
+                </span>
+
+                <!-- ── Video call (doctor + patient, confirmed) ── -->
+                <a *ngIf="a.status === 'confirmed' && (currentRole === 'patient' || currentRole === 'doctor')"
+                   mat-icon-button [routerLink]="['/dashboard/video', a.id]" matTooltip="Intră în teleconsultație"
+                   style="background:#eff6ff;border-radius:9px;width:36px;height:36px;
+                          display:flex;align-items:center;justify-content:center;">
+                  <i-tabler name="video" style="width:17px;height:17px;color:#2563eb;"></i-tabler>
+                </a>
+
+                <!-- ── Patient — anulează ── -->
+                <button mat-icon-button
+                        *ngIf="currentRole === 'patient' && (a.status === 'pending' || a.status === 'confirmed')"
+                        (click)="cancelAppointment(a.id)" matTooltip="Anulează"
+                        style="background:#fef2f2;border-radius:9px;width:36px;height:36px;">
+                  <i-tabler name="x" style="width:17px;height:17px;color:#dc2626;"></i-tabler>
+                </button>
+
+                <!-- ── Patient — recenzie ── -->
+                <button mat-icon-button
+                        *ngIf="currentRole === 'patient' && a.status === 'completed' && !reviewedAppointments.has(a.id)"
+                        (click)="openReviewDialog(a.id)" matTooltip="Lasă o recenzie"
+                        style="background:#fffbeb;border-radius:9px;width:36px;height:36px;">
+                  <i-tabler name="star" style="width:17px;height:17px;color:#f59e0b;"></i-tabler>
+                </button>
+
+                <div *ngIf="currentRole === 'patient' && a.status === 'completed' && reviewedAppointments.has(a.id)"
+                     style="background:#fffbeb;border-radius:9px;width:36px;height:36px;
+                            display:flex;align-items:center;justify-content:center;"
+                     matTooltip="Recenzie trimisă">
+                  <i-tabler name="star-filled" style="width:17px;height:17px;color:#f59e0b;"></i-tabler>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Paginare ──────────────────────────────────────────────────── -->
+        <div *ngIf="!loading && totalPages > 1"
+             style="display:flex;align-items:center;justify-content:space-between;
+                    margin-top:16px;flex-wrap:wrap;gap:10px;">
+
+          <!-- Info -->
+          <span style="font-size:.78rem;color:#64748b;">
+            Pagina <strong>{{ currentPage + 1 }}</strong> din <strong>{{ totalPages }}</strong>
+            &nbsp;·&nbsp;
+            <span style="color:#94a3b8;">{{ pageStartIndex }}–{{ pageEndIndex }} din {{ filteredAppointments.length }} programări</span>
+          </span>
+
+          <!-- Butoane pagini -->
+          <div style="display:flex;align-items:center;gap:4px;">
+
+            <!-- Prev -->
+            <button mat-icon-button [disabled]="currentPage === 0"
+                    (click)="goToPage(currentPage - 1)"
+                    style="width:34px;height:34px;border-radius:8px;"
+                    matTooltip="Pagina anterioară">
+              <i-tabler name="chevron-left" style="width:16px;height:16px;"></i-tabler>
+            </button>
+
+            <!-- Page numbers -->
+            <ng-container *ngFor="let p of pageNumbers">
+              <button
+                *ngIf="p === 0 || p === totalPages - 1 || (p >= currentPage - 1 && p <= currentPage + 1)"
+                (click)="goToPage(p)"
+                style="width:34px;height:34px;border-radius:8px;border:none;cursor:pointer;
+                       font-size:.82rem;font-weight:600;transition:all .15s;"
+                [style.background]="p === currentPage ? '#2563eb' : '#f1f5f9'"
+                [style.color]="p === currentPage ? '#fff' : '#475569'">
+                {{ p + 1 }}
+              </button>
+              <!-- Elipsis -->
+              <span *ngIf="(p === 1 && currentPage > 2) || (p === totalPages - 2 && currentPage < totalPages - 3)"
+                    style="font-size:.85rem;color:#94a3b8;padding:0 2px;">…</span>
+            </ng-container>
+
+            <!-- Next -->
+            <button mat-icon-button [disabled]="currentPage === totalPages - 1"
+                    (click)="goToPage(currentPage + 1)"
+                    style="width:34px;height:34px;border-radius:8px;"
+                    matTooltip="Pagina următoare">
+              <i-tabler name="chevron-right" style="width:16px;height:16px;"></i-tabler>
+            </button>
+
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- ── Dialog recenzie ─────────────────────────────────────────────────── -->
+<div *ngIf="showReviewDialog"
+     style="position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1000;
+            display:flex;align-items:center;justify-content:center;"
+     (click)="closeReviewDialog()">
+  <mat-card class="cardWithShadow" style="width:440px;max-width:95vw;border-radius:16px;"
+            (click)="$event.stopPropagation()">
+
+    <!-- Dialog header -->
+    <div style="padding:20px 24px 0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:#fffbeb;
+                    display:flex;align-items:center;justify-content:center;">
+          <i-tabler name="star" style="width:18px;height:18px;color:#f59e0b;"></i-tabler>
+        </div>
+        <div>
+          <p style="margin:0;font-size:.97rem;font-weight:700;color:#1e293b;">Lasă o recenzie</p>
+          <p style="margin:1px 0 0;font-size:.76rem;color:#64748b;">Evaluează consultația cu doctorul</p>
+        </div>
+        <span style="flex:1;"></span>
+        <button mat-icon-button (click)="closeReviewDialog()">
+          <i-tabler name="x" style="width:17px;height:17px;"></i-tabler>
+        </button>
+      </div>
+    </div>
+
+    <mat-card-content style="padding:18px 24px;">
+
+      <!-- Stars -->
+      <p style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:#475569;">Rating *</p>
+      <div style="display:flex;gap:6px;margin-bottom:18px;align-items:center;">
+        <ng-container *ngFor="let star of [1,2,3,4,5]">
+          <i-tabler
+            [name]="(reviewHoverRating || reviewRating) >= star ? 'star-filled' : 'star'"
+            [style.color]="(reviewHoverRating || reviewRating) >= star ? '#f59e0b' : '#cbd5e1'"
+            style="width:34px;height:34px;cursor:pointer;transition:transform .1s;"
+            (mouseenter)="reviewHoverRating = star"
+            (mouseleave)="reviewHoverRating = 0"
+            (click)="reviewRating = star">
+          </i-tabler>
+        </ng-container>
+        <span style="margin-left:8px;font-size:.85rem;color:#64748b;font-weight:600;">
+          {{ reviewRating > 0 ? reviewRating + '/5' : 'Selectează' }}
+        </span>
+      </div>
+
+      <!-- Comment -->
+      <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+        <mat-label>Comentariu (opțional)</mat-label>
+        <textarea matInput [(ngModel)]="reviewComment" rows="3"
+                  placeholder="Cum a decurs consultația?"></textarea>
+      </mat-form-field>
+
+    </mat-card-content>
+
+    <mat-card-actions style="padding:12px 24px 18px;display:flex;gap:8px;justify-content:flex-end;">
+      <button mat-stroked-button (click)="closeReviewDialog()" style="border-radius:8px;">Anulează</button>
+      <button mat-flat-button color="primary"
+              [disabled]="reviewRating === 0 || savingReview"
+              (click)="submitReview()" style="border-radius:8px;">
+        <i-tabler name="check" style="width:15px;height:15px;margin-right:5px;"></i-tabler>
+        {{ savingReview ? 'Se trimite…' : 'Trimite recenzia' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

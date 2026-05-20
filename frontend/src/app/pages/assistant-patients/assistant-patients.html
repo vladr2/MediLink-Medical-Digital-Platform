@@ -1,0 +1,99 @@
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+      <mat-card-header class="p-16 d-flex align-items-center justify-content-between">
+        <mat-card-title>Lista pacienților</mat-card-title>
+        <span style="font-size:.78rem;color:#64748b;font-weight:500;">
+          {{ filteredPatients.length }} pacienți
+        </span>
+      </mat-card-header>
+
+      <div class="p-x-16 p-y-8">
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Caută pacient</mat-label>
+          <input matInput [(ngModel)]="searchText" (ngModelChange)="filterPatients()" placeholder="Nume sau email…" />
+          <i-tabler name="search" matSuffix></i-tabler>
+        </mat-form-field>
+      </div>
+
+      <mat-card-content>
+        <app-skeleton *ngIf="loading" [rows]="5" [card]="false" [title]="true" class="p-16 d-block"></app-skeleton>
+
+        <div *ngIf="!loading && filteredPatients.length === 0" class="p-24 text-center">
+          <i-tabler name="users-off" class="icon-48 text-muted"></i-tabler>
+          <p class="mat-body-1 text-muted m-t-8">Nu există pacienți.</p>
+        </div>
+
+        <table mat-table [dataSource]="filteredPatients" *ngIf="!loading && filteredPatients.length > 0" class="w-100">
+
+          <ng-container matColumnDef="full_name">
+            <th mat-header-cell *matHeaderCellDef>Pacient</th>
+            <td mat-cell *matCellDef="let p">
+              <div style="display:flex;align-items:center;gap:10px;padding:6px 0;">
+                <div style="width:34px;height:34px;border-radius:50%;background:#eff6ff;
+                            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <span style="font-size:.8rem;font-weight:700;color:#2563eb;">
+                    {{ (p.first_name || p.email).charAt(0).toUpperCase() }}
+                  </span>
+                </div>
+                <div>
+                  <p style="margin:0;font-size:.85rem;font-weight:600;color:#1e293b;">
+                    {{ patientName(p) }}
+                  </p>
+                  <p style="margin:0;font-size:.72rem;color:#94a3b8;">{{ p.email }}</p>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="blood_type">
+            <th mat-header-cell *matHeaderCellDef>Grupă</th>
+            <td mat-cell *matCellDef="let p">
+              <mat-chip *ngIf="p.blood_type" color="primary" highlighted>{{ p.blood_type }}</mat-chip>
+              <span *ngIf="!p.blood_type" style="color:#cbd5e1;">—</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="allergies">
+            <th mat-header-cell *matHeaderCellDef>Alergii</th>
+            <td mat-cell *matCellDef="let p"
+                style="font-size:.78rem;color:#64748b;max-width:160px;
+                       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ p.allergies || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="chronic">
+            <th mat-header-cell *matHeaderCellDef>Condiții cronice</th>
+            <td mat-cell *matCellDef="let p"
+                style="font-size:.78rem;color:#64748b;max-width:200px;
+                       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ p.chronic_conditions || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Atribuire doctor</th>
+            <td mat-cell *matCellDef="let p">
+              <button mat-stroked-button
+                      style="font-size:.75rem;height:30px;padding:0 10px;min-width:unset;
+                             border-color:#0ea5e9;color:#0ea5e9;border-radius:6px;"
+                      [disabled]="assigning[p.id]"
+                      (click)="openAssignDialog(p)"
+                      matTooltip="Atribuie acest pacient unui doctor">
+                <i-tabler name="user-plus" style="width:13px;height:13px;margin-right:3px;vertical-align:middle;"></i-tabler>
+                {{ assigning[p.id] ? 'Se atribuie…' : 'Atribuie' }}
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+              style="transition:background .1s;"
+              [style.background]="''"
+              class="cursor-pointer"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

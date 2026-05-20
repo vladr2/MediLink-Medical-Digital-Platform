@@ -1,0 +1,280 @@
+<style>
+.ml-vital-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 600;
+  transition: all .18s;
+  background: #f8fafc;
+  color: #475569;
+  white-space: nowrap;
+}
+.ml-vital-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.10);
+}
+.ml-vital-chip.active {
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 3px 12px rgba(0,0,0,.15);
+}
+.ml-vital-chip-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+.ml-vital-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ml-vital-row:last-child { border-bottom: none; }
+.ml-vital-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.ml-vital-value  { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+.ml-vital-unit   { font-size: .75rem; color: #94a3b8; margin-left: 2px; }
+.ml-vital-date   { font-size: .75rem; color: #94a3b8; }
+.ml-vital-note   { font-size: .75rem; color: #64748b; font-style: italic; }
+.ml-empty-state  {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48px 24px; gap: 12px; text-align: center;
+}
+.ml-chart-wrap   { position: relative; min-height: 290px; }
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <mat-card class="cardWithShadow">
+
+      <!-- ── Header ─────────────────────────────────────────────────────────── -->
+      <mat-card-header style="padding: 20px 24px 0; flex-direction: column; align-items: stretch;">
+        <div class="d-flex align-items-center gap-12 m-b-16" style="flex-wrap:wrap;">
+
+          <!-- Icon + title -->
+          <div class="d-flex align-items-center gap-8">
+            <div style="width:40px;height:40px;border-radius:10px;
+                        background:linear-gradient(135deg,#ef4444,#f97316);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="heart-rate-monitor" style="color:#fff;width:20px;height:20px;"></i-tabler>
+            </div>
+            <div>
+              <mat-card-title style="margin:0;font-size:1.1rem;font-weight:700;">Semne vitale</mat-card-title>
+              <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+                {{ selectedPatient ? patientName(selectedPatient) : 'Selectează un pacient' }}
+              </p>
+            </div>
+          </div>
+
+          <span style="flex:1;"></span>
+
+          <!-- Patient selector -->
+          <mat-form-field appearance="outline" subscriptSizing="dynamic"
+                          style="min-width:220px;max-width:280px;margin:0;">
+            <mat-label>
+              <i-tabler name="user" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i-tabler>
+              Pacient
+            </mat-label>
+            <mat-select [ngModel]="selectedPatient" (ngModelChange)="onPatientChange($event)"
+                        [disabled]="loadingPats">
+              <mat-option *ngFor="let p of patients" [value]="p">{{ patientName(p) }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Total badge -->
+          <div *ngIf="selectedPatient && !loading"
+               style="display:flex;align-items:center;gap:6px;padding:6px 12px;
+                      background:#fef2f2;border-radius:8px;border:1px solid #fecaca;">
+            <i-tabler name="heart-pulse" style="width:15px;height:15px;color:#ef4444;"></i-tabler>
+            <span style="font-size:.8rem;color:#7f1d1d;font-weight:600;">Total măsurători:</span>
+            <span style="font-size:.85rem;font-weight:800;color:#ef4444;">{{ vitals.length }}</span>
+          </div>
+
+          <!-- Add button -->
+          <button *ngIf="selectedPatient"
+                  mat-raised-button color="primary"
+                  style="border-radius:8px;font-size:.82rem;"
+                  (click)="showForm = !showForm">
+            <i-tabler [name]="showForm ? 'x' : 'plus'" style="width:16px;height:16px;margin-right:4px;"></i-tabler>
+            {{ showForm ? 'Anulează' : 'Adaugă măsurătoare' }}
+          </button>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content style="padding: 12px 24px 24px;">
+
+        <!-- ── Add Form ────────────────────────────────────────────────────── -->
+        <div *ngIf="showForm && selectedPatient"
+             style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;
+                    padding:16px 20px;margin-bottom:20px;">
+          <p style="margin:0 0 12px;font-size:.9rem;font-weight:700;color:#1e293b;">
+            Înregistrare nouă — {{ patientName(selectedPatient) }}
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Tip semn vital</mat-label>
+              <mat-select [(ngModel)]="vitalType">
+                <mat-option *ngFor="let t of vitalTypes" [value]="t.key">
+                  {{ t.label }} ({{ t.unit }})
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Valoare ({{ selectedVitalUnit }})</mat-label>
+              <input matInput type="number" [(ngModel)]="vitalValue" placeholder="ex: 72" min="0" step="0.1">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" style="grid-column: 1 / -1;">
+              <mat-label>Note (opțional)</mat-label>
+              <textarea matInput [(ngModel)]="vitalNotes" rows="2"
+                        placeholder="ex: după efort, în repaus, post-consultație…"></textarea>
+            </mat-form-field>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+            <button mat-stroked-button (click)="showForm=false">Anulează</button>
+            <button mat-raised-button color="primary"
+                    [disabled]="savingVital || !vitalValue"
+                    (click)="saveVital()">
+              <i-tabler *ngIf="!savingVital" name="device-floppy"
+                        style="width:16px;height:16px;margin-right:4px;"></i-tabler>
+              <mat-spinner *ngIf="savingVital" diameter="16"
+                           style="display:inline-block;margin-right:6px;"></mat-spinner>
+              Salvează
+            </button>
+          </div>
+        </div>
+
+        <!-- ── No patient selected ────────────────────────────────────────── -->
+        <div *ngIf="!selectedPatient" class="ml-empty-state">
+          <div style="width:64px;height:64px;border-radius:16px;background:#f1f5f9;
+                      display:flex;align-items:center;justify-content:center;">
+            <i-tabler name="user-search" style="width:32px;height:32px;color:#94a3b8;"></i-tabler>
+          </div>
+          <div>
+            <p style="margin:0;font-size:.95rem;font-weight:700;color:#1e293b;">
+              Niciun pacient selectat
+            </p>
+            <p style="margin:6px 0 0;font-size:.83rem;color:#64748b;">
+              Selectează un pacient din meniul de mai sus pentru a vedea semnele vitale.
+            </p>
+          </div>
+        </div>
+
+        <!-- ── Loading skeleton ───────────────────────────────────────────── -->
+        <app-skeleton *ngIf="loading" [rows]="5" [card]="true" [title]="true"></app-skeleton>
+
+        <!-- ── Main content ───────────────────────────────────────────────── -->
+        <div *ngIf="!loading && selectedPatient">
+
+          <!-- Type selector chips -->
+          <div class="ml-vital-chip-bar">
+            <button *ngFor="let t of vitalTypes"
+                    class="ml-vital-chip"
+                    [class.active]="selectedType === t.key"
+                    [style.background]="selectedType === t.key ? t.color : ''"
+                    [style.borderColor]="selectedType !== t.key ? t.color : 'transparent'"
+                    [style.color]="selectedType !== t.key ? t.color : '#fff'"
+                    (click)="selectType(t.key)">
+              <i-tabler [name]="t.icon" style="width:14px;height:14px;"></i-tabler>
+              {{ t.label }}
+            </button>
+          </div>
+
+          <!-- Chart section -->
+          <div class="ml-chart-wrap m-t-12 m-b-20">
+
+            <!-- Empty state for selected type -->
+            <div *ngIf="recentVitals.length === 0" class="ml-empty-state">
+              <div style="width:64px;height:64px;border-radius:16px;background:#fef2f2;
+                          display:flex;align-items:center;justify-content:center;">
+                <i-tabler [name]="selectedTypeInfo.icon"
+                          style="width:32px;height:32px;opacity:.35;"
+                          [style.color]="selectedTypeInfo.color"></i-tabler>
+              </div>
+              <div>
+                <p style="margin:0;font-size:.95rem;font-weight:700;color:#1e293b;">
+                  Nicio măsurătoare pentru {{ selectedTypeInfo.label }}
+                </p>
+                <p style="margin:6px 0 0;font-size:.83rem;color:#64748b;">
+                  Apasă „Adaugă măsurătoare" pentru a înregistra prima valoare.
+                </p>
+              </div>
+            </div>
+
+            <!-- Line chart -->
+            <div *ngIf="recentVitals.length > 0">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <div class="ml-vital-badge" [style.background]="selectedTypeInfo.color + '1a'">
+                  <i-tabler [name]="selectedTypeInfo.icon"
+                            style="width:18px;height:18px;"
+                            [style.color]="selectedTypeInfo.color"></i-tabler>
+                </div>
+                <span style="font-size:.9rem;font-weight:700;color:#1e293b;">
+                  {{ selectedTypeInfo.label }}
+                </span>
+                <span style="font-size:.8rem;color:#94a3b8;">({{ selectedTypeInfo.unit }})</span>
+                <span style="flex:1;"></span>
+                <span style="font-size:.8rem;color:#64748b;">
+                  {{ recentVitals.length }} înregistrări
+                </span>
+              </div>
+
+              <apx-chart
+                [series]="chart.series"
+                [chart]="chart.chart"
+                [stroke]="chart.stroke"
+                [markers]="chart.markers"
+                [xaxis]="chart.xaxis"
+                [yaxis]="chart.yaxis"
+                [grid]="chart.grid"
+                [tooltip]="chart.tooltip"
+                [colors]="chart.colors"
+                [fill]="chart.fill">
+              </apx-chart>
+            </div>
+          </div>
+
+          <!-- Recent measurements list -->
+          <div *ngIf="recentVitals.length > 0">
+            <p style="margin:0 0 10px;font-size:.85rem;font-weight:700;color:#475569;
+                      text-transform:uppercase;letter-spacing:.5px;">
+              Ultimele {{ recentVitals.length }} măsurători
+            </p>
+
+            <div *ngFor="let v of recentVitals" class="ml-vital-row">
+              <div class="ml-vital-badge" [style.background]="selectedTypeInfo.color + '18'">
+                <i-tabler [name]="selectedTypeInfo.icon"
+                          style="width:16px;height:16px;"
+                          [style.color]="selectedTypeInfo.color"></i-tabler>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <span class="ml-vital-value">{{ v.value }}</span>
+                <span class="ml-vital-unit">{{ v.unit }}</span>
+                <div *ngIf="v.notes" class="ml-vital-note m-t-2">{{ v.notes }}</div>
+              </div>
+              <span class="ml-vital-date">{{ formatDate(v.recorded_at) }}</span>
+            </div>
+          </div>
+
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

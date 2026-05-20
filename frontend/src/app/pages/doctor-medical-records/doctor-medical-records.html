@@ -1,0 +1,368 @@
+<style>
+.ml-rec-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: visible;
+  transition: box-shadow .2s, transform .15s;
+  cursor: pointer;
+  background: #fff;
+  display: block;
+  margin-bottom: 10px;
+}
+.ml-rec-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); transform: translateY(-1px); }
+.ml-rec-card .card-strip { height: 4px; border-radius: 12px 12px 0 0; }
+.ml-rec-card .card-header { padding: 12px 16px 8px; display: flex; align-items: flex-start; gap: 12px; }
+.ml-rec-card .card-icon { width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.ml-rec-card .card-box { margin: 0 16px 10px; padding: 9px 12px; border-radius: 8px; }
+.ml-rec-card .card-footer { padding: 7px 16px 10px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+.ml-patient-item { padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: background .12s; border: 1px solid transparent; margin-bottom: 4px; }
+.ml-patient-item:hover { background: #f8fafc; border-color: #e2e8f0; }
+.ml-patient-item.active { background: #eff6ff; border-color: #bfdbfe; }
+</style>
+
+<div class="row">
+
+  <!-- ── Lista pacienți ─────────────────────────────────────────────────────── -->
+  <div class="col-lg-3 m-b-24">
+    <mat-card class="cardWithShadow" style="height:100%;">
+      <div style="padding:16px 16px 12px;border-bottom:1px solid #f1f5f9;">
+        <p style="margin:0;font-size:.95rem;font-weight:700;color:#1e293b;">Pacienții mei</p>
+        <p style="margin:2px 0 0;font-size:.74rem;color:#94a3b8;">{{ patients.length }} pacienți</p>
+      </div>
+      <mat-card-content style="padding:12px;">
+        <div *ngIf="patients.length === 0" style="padding:24px;text-align:center;">
+          <i-tabler name="users-off" style="width:32px;height:32px;color:#cbd5e1;display:block;margin:0 auto 8px;"></i-tabler>
+          <p style="margin:0;font-size:.82rem;color:#94a3b8;">Nu aveți pacienți atribuiți.</p>
+        </div>
+        <div *ngFor="let p of patients"
+             class="ml-patient-item"
+             [class.active]="selectedPatient?.id === p.id"
+             (click)="selectPatient(p)">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:#eff6ff;
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:.78rem;font-weight:700;color:#2563eb;">
+                {{ (p.first_name || p.email).charAt(0).toUpperCase() }}
+              </span>
+            </div>
+            <div style="min-width:0;">
+              <p style="margin:0;font-size:.83rem;font-weight:600;color:#1e293b;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ (p.first_name || p.last_name) ? p.first_name + ' ' + p.last_name : p.email }}
+              </p>
+              <p style="margin:0;font-size:.7rem;color:#94a3b8;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ p.email }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ── Fișă medicală pacient ──────────────────────────────────────────────── -->
+  <div class="col-lg-9 m-b-24" *ngIf="selectedPatient">
+
+    <!-- Header card -->
+    <mat-card class="cardWithShadow m-b-16">
+      <mat-card-content style="padding:18px 22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+
+          <!-- Titlu -->
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:42px;height:42px;border-radius:11px;
+                        background:linear-gradient(135deg,#2563eb,#7c3aed);
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i-tabler name="notes-medical" style="color:#fff;width:20px;height:20px;"></i-tabler>
+            </div>
+            <div>
+              <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">
+                Fișă medicală — {{ (selectedPatient.first_name || selectedPatient.last_name) ? selectedPatient.first_name + ' ' + selectedPatient.last_name : selectedPatient.email }}
+              </p>
+              <p style="margin:2px 0 0;font-size:.74rem;color:#64748b;">
+                {{ dataSource.data.length }} înregistrări totale
+              </p>
+            </div>
+          </div>
+
+          <!-- Acțiuni -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button mat-stroked-button
+                    (click)="analyzeRisk()"
+                    [disabled]="!selectedPatient || loadingRisk"
+                    style="border-color:#7c3aed;color:#7c3aed;border-radius:8px;font-size:.82rem;">
+              <i-tabler *ngIf="!loadingRisk" name="brain" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+              <mat-spinner *ngIf="loadingRisk" diameter="14" style="display:inline-block;margin-right:4px;"></mat-spinner>
+              {{ loadingRisk ? 'Se analizează...' : 'Predicție Risc AI' }}
+            </button>
+            <button mat-stroked-button color="accent" (click)="generateAIReport()"
+                    [disabled]="generatingReport"
+                    style="border-radius:8px;font-size:.82rem;">
+              <mat-spinner *ngIf="generatingReport" diameter="14" style="display:inline-block;margin-right:4px;"></mat-spinner>
+              <i-tabler *ngIf="!generatingReport" name="report-medical" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+              {{ generatingReport ? 'Se generează...' : 'Raport AI' }}
+            </button>
+            <button mat-flat-button color="primary" (click)="showForm = !showForm"
+                    style="border-radius:8px;font-size:.82rem;">
+              <i-tabler name="plus" style="width:15px;height:15px;margin-right:4px;"></i-tabler>
+              Adaugă înregistrare
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Formular adăugare înregistrare -->
+    <mat-card class="cardWithShadow m-b-16" *ngIf="showForm"
+              style="border-top:3px solid #2563eb;">
+      <mat-card-content class="p-24">
+        <p style="margin:0 0 16px;font-size:.88rem;font-weight:700;color:#1e293b;">
+          <i-tabler name="file-plus" style="width:15px;height:15px;margin-right:5px;vertical-align:middle;color:#2563eb;"></i-tabler>
+          Înregistrare nouă
+        </p>
+        <form [formGroup]="form" (ngSubmit)="saveRecord()">
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Tip înregistrare</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-select formControlName="record_type">
+              <mat-option *ngFor="let t of recordTypes" [value]="t">{{ t | titlecase }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Note</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="notes_encrypted" rows="3" placeholder="Observații, recomandări..."></textarea>
+          </mat-form-field>
+
+          <ng-container *ngIf="form.get('record_type')?.value === 'consultatie'">
+            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Diagnostic</mat-label>
+            <mat-form-field appearance="outline" class="w-100">
+              <textarea matInput formControlName="diagnosis" rows="2" placeholder="Diagnostic..."></textarea>
+            </mat-form-field>
+          </ng-container>
+
+          <ng-container *ngIf="form.get('record_type')?.value === 'tratament'">
+            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Tratament</mat-label>
+            <mat-form-field appearance="outline" class="w-100">
+              <textarea matInput formControlName="treatment" rows="2" placeholder="Tratament prescris..."></textarea>
+            </mat-form-field>
+          </ng-container>
+
+          <ng-container *ngIf="form.get('record_type')?.value === 'analiza'">
+            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Rezultat analiză</mat-label>
+            <mat-form-field appearance="outline" class="w-100">
+              <textarea matInput formControlName="analysis_result" rows="2" placeholder="Rezultatul analizei..."></textarea>
+            </mat-form-field>
+          </ng-container>
+
+          <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Date suplimentare</mat-label>
+          <mat-form-field appearance="outline" class="w-100">
+            <textarea matInput formControlName="data_encrypted" rows="2" placeholder="Date adiționale..."></textarea>
+          </mat-form-field>
+
+          <div *ngIf="successMessage" class="text-success m-b-12">{{ successMessage }}</div>
+          <div *ngIf="errorMessage" class="text-error m-b-12">{{ errorMessage }}</div>
+
+          <div class="d-flex gap-8">
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving || form.invalid">
+              {{ saving ? 'Se salvează...' : 'Salvează' }}
+            </button>
+            <button mat-stroked-button type="button" (click)="showForm = false">Anulează</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Chip filtre tip -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;" *ngIf="!loading">
+      <button *ngFor="let f of typeFilters"
+              mat-stroked-button
+              (click)="setTypeFilter(f.value)"
+              [style.background]="activeTypeFilter === f.value ? '#2563eb' : '#fff'"
+              [style.color]="activeTypeFilter === f.value ? '#fff' : '#475569'"
+              [style.borderColor]="activeTypeFilter === f.value ? '#2563eb' : '#e2e8f0'"
+              style="border-radius:20px;font-size:.75rem;font-weight:600;height:30px;padding:0 12px;min-width:unset;">
+        <i-tabler [name]="f.icon" style="width:12px;height:12px;margin-right:3px;vertical-align:middle;"></i-tabler>
+        {{ f.label }}
+        <span *ngIf="f.value !== null"
+              style="margin-left:4px;background:rgba(0,0,0,.12);border-radius:10px;padding:1px 6px;font-size:.65rem;">
+          {{ countByType(f.value) }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <app-skeleton *ngIf="loading" [rows]="4" [card]="true" [title]="true"></app-skeleton>
+
+    <!-- Empty state -->
+    <div *ngIf="!loading && totalFiltered === 0"
+         style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;
+                padding:48px 24px;text-align:center;">
+      <i-tabler name="file-off" style="width:40px;height:40px;color:#cbd5e1;display:block;margin:0 auto 12px;"></i-tabler>
+      <p style="margin:0;font-size:.9rem;font-weight:600;color:#1e293b;">Nicio înregistrare</p>
+      <p style="margin:6px 0 0;font-size:.82rem;color:#64748b;">
+        {{ activeTypeFilter ? 'Nu există înregistrări de tip "' + activeTypeFilter + '".' : 'Nu există înregistrări medicale pentru acest pacient.' }}
+      </p>
+    </div>
+
+    <!-- Cards înregistrări -->
+    <div *ngIf="!loading && totalFiltered > 0">
+      <div *ngFor="let r of pagedRecords" class="ml-rec-card" (click)="viewRecord(r)">
+
+        <!-- Color strip per tip -->
+        <div class="card-strip"
+             [style.background]="r.record_type === 'consultatie' ? 'linear-gradient(90deg,#2563eb,#7c3aed)'
+               : r.record_type === 'analiza'      ? 'linear-gradient(90deg,#0d9488,#06b6d4)'
+               : r.record_type === 'tratament'    ? 'linear-gradient(90deg,#7c3aed,#a855f7)'
+               : r.record_type === 'reteta'       ? 'linear-gradient(90deg,#ea580c,#f97316)'
+               : r.record_type === 'investigatie' ? 'linear-gradient(90deg,#db2777,#e879a0)'
+               : 'linear-gradient(90deg,#64748b,#94a3b8)'">
+        </div>
+
+        <!-- Header row -->
+        <div class="card-header">
+          <div class="card-icon"
+               [style.background]="r.record_type === 'consultatie' ? '#eff6ff'
+                 : r.record_type === 'analiza'      ? '#f0fdfa'
+                 : r.record_type === 'tratament'    ? '#f5f3ff'
+                 : r.record_type === 'reteta'       ? '#fff7ed'
+                 : r.record_type === 'investigatie' ? '#fdf2f8'
+                 : '#f8fafc'">
+            <i-tabler
+              [name]="r.record_type === 'consultatie' ? 'stethoscope'
+                    : r.record_type === 'analiza'      ? 'microscope'
+                    : r.record_type === 'tratament'    ? 'pill'
+                    : r.record_type === 'reteta'       ? 'clipboard-text'
+                    : r.record_type === 'investigatie' ? 'scan'
+                    : 'report-medical'"
+              style="width:17px;height:17px;"
+              [style.color]="r.record_type === 'consultatie' ? '#2563eb'
+                : r.record_type === 'analiza'      ? '#0d9488'
+                : r.record_type === 'tratament'    ? '#7c3aed'
+                : r.record_type === 'reteta'       ? '#ea580c'
+                : r.record_type === 'investigatie' ? '#db2777'
+                : '#64748b'">
+            </i-tabler>
+          </div>
+
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;"
+                    [style.color]="r.record_type === 'consultatie' ? '#2563eb'
+                      : r.record_type === 'analiza'      ? '#0d9488'
+                      : r.record_type === 'tratament'    ? '#7c3aed'
+                      : r.record_type === 'reteta'       ? '#ea580c'
+                      : r.record_type === 'investigatie' ? '#db2777'
+                      : '#64748b'">
+                {{ r.record_type | titlecase }}
+              </span>
+            </div>
+            <p style="margin:2px 0 0;font-size:.78rem;color:#64748b;">
+              {{ r.created_at | date:'dd.MM.yyyy HH:mm' }}
+            </p>
+          </div>
+
+          <!-- Acțiuni -->
+          <div style="display:flex;gap:4px;flex-shrink:0;" (click)="$event.stopPropagation()">
+            <button mat-icon-button
+                    (click)="viewRecord(r)"
+                    matTooltip="Vezi detalii"
+                    style="width:32px;height:32px;background:#f1f5f9;border-radius:8px;">
+              <i-tabler name="eye" style="width:15px;height:15px;color:#475569;"></i-tabler>
+            </button>
+            <button mat-icon-button
+                    (click)="deleteRecord(r.id)"
+                    matTooltip="Șterge"
+                    style="width:32px;height:32px;background:#fef2f2;border-radius:8px;">
+              <i-tabler name="trash" style="width:15px;height:15px;color:#dc2626;"></i-tabler>
+            </button>
+          </div>
+        </div>
+
+        <!-- Diagnostic -->
+        <div *ngIf="r.diagnosis" class="card-box"
+             style="background:linear-gradient(135deg,#fefce8,#fffbeb);border-left:3px solid #ca8a04;">
+          <p style="margin:0 0 3px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.5px;color:#92400e;">Diagnostic</p>
+          <p style="margin:0;font-size:.85rem;color:#78350f;line-height:1.5;">{{ r.diagnosis }}</p>
+        </div>
+
+        <!-- Note -->
+        <div *ngIf="r.notes_encrypted" class="card-box"
+             style="background:#f8fafc;border:1px solid #e2e8f0;">
+          <p style="margin:0 0 3px;font-size:.67rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.5px;color:#64748b;">Note medic</p>
+          <p style="margin:0;font-size:.85rem;color:#475569;line-height:1.5;
+                    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+            {{ r.notes_encrypted }}
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer">
+          <span style="font-size:.7rem;color:#94a3b8;">{{ r.id | slice:0:8 }}…</span>
+          <span style="font-size:.7rem;color:#94a3b8;">Click pentru detalii</span>
+        </div>
+      </div>
+
+      <!-- ── Paginare ────────────────────────────────────────────────────── -->
+      <div *ngIf="totalPages > 1"
+           style="display:flex;align-items:center;justify-content:space-between;
+                  margin-top:18px;padding:12px 16px;background:#fff;
+                  border-radius:12px;border:1px solid #e2e8f0;">
+
+        <span style="font-size:.78rem;color:#64748b;">
+          Afișezi
+          <strong style="color:#1e293b;">{{ pageIndex * pageSize + 1 }}–{{ pageEndIndex }}</strong>
+          din <strong style="color:#1e293b;">{{ totalFiltered }}</strong> înregistrări
+        </span>
+
+        <div style="display:flex;align-items:center;gap:4px;">
+          <!-- Prev -->
+          <button mat-icon-button [disabled]="pageIndex === 0" (click)="prevPage()"
+                  style="width:32px;height:32px;background:#f1f5f9;border-radius:8px;">
+            <i-tabler name="chevron-left" style="width:15px;height:15px;color:#475569;"></i-tabler>
+          </button>
+
+          <!-- Page numbers -->
+          <ng-container *ngFor="let p of pageNumbers">
+            <button *ngIf="p === pageIndex || p === 0 || p === totalPages - 1 || (p >= pageIndex - 1 && p <= pageIndex + 1)"
+                    mat-button (click)="goToPage(p)"
+                    [style.background]="p === pageIndex ? '#2563eb' : '#f1f5f9'"
+                    [style.color]="p === pageIndex ? '#fff' : '#475569'"
+                    style="min-width:32px;width:32px;height:32px;padding:0;border-radius:8px;
+                           font-size:.8rem;font-weight:600;line-height:32px;">
+              {{ p + 1 }}
+            </button>
+            <span *ngIf="(p === 1 && pageIndex > 2) || (p === totalPages - 2 && pageIndex < totalPages - 3)"
+                  style="font-size:.8rem;color:#94a3b8;padding:0 2px;">…</span>
+          </ng-container>
+
+          <!-- Next -->
+          <button mat-icon-button [disabled]="pageIndex >= totalPages - 1" (click)="nextPage()"
+                  style="width:32px;height:32px;background:#f1f5f9;border-radius:8px;">
+            <i-tabler name="chevron-right" style="width:15px;height:15px;color:#475569;"></i-tabler>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Empty state — niciun pacient selectat -->
+  <div class="col-lg-9 m-b-24" *ngIf="!selectedPatient">
+    <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;
+                padding:72px 24px;text-align:center;">
+      <div style="width:64px;height:64px;border-radius:16px;background:#eff6ff;
+                  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <i-tabler name="user-search" style="width:30px;height:30px;color:#2563eb;"></i-tabler>
+      </div>
+      <p style="margin:0;font-size:1rem;font-weight:700;color:#1e293b;">Niciun pacient selectat</p>
+      <p style="margin:8px 0 0;font-size:.85rem;color:#64748b;">
+        Selectează un pacient din lista din stânga pentru a vedea fișa medicală.
+      </p>
+    </div>
+  </div>
+
+</div>
