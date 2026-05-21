@@ -1,0 +1,264 @@
+% ============================================================
+%  Capitolul 2 — Noțiuni teoretice și tehnologii utilizate
+% ============================================================
+\chapter{Noțiuni teoretice și tehnologii utilizate}
+
+\section{Arhitectura aplicațiilor web moderne}
+
+\subsection{Modelul client-server și arhitectura REST}
+
+Aplicațiile web moderne sunt construite pe baza modelului \textbf{client-server}, în care responsabilitățile sunt clar separate: clientul (browserul web sau aplicația mobilă) se ocupă de prezentarea datelor și interacțiunea cu utilizatorul, în timp ce serverul gestionează logica de business, persistența datelor și securitatea.
+
+Comunicarea dintre client și server se realizează prin interfețe de tip \textbf{API} (\textit{Application Programming Interface}). Stilul arhitectural dominant în aplicațiile web actuale este \textbf{REST} (\textit{Representational State Transfer}), definit de Roy Fielding în teza sa de doctorat din 2000 \cite{fielding2000rest}. Principiile fundamentale ale REST includ:
+
+\begin{itemize}
+  \item \textbf{Interfață uniformă} — resurse identificate prin URI-uri, manipulate prin metodele standard HTTP (GET, POST, PUT, DELETE, PATCH);
+  \item \textbf{Statelessness} — fiecare cerere conține toate informațiile necesare procesării sale, serverul nu păstrează starea sesiunii între cereri;
+  \item \textbf{Cacheability} — răspunsurile pot fi marcate ca cacheable sau non-cacheable;
+  \item \textbf{Sistem pe niveluri} — clientul nu trebuie să știe dacă comunică direct cu serverul final sau cu un intermediar (load balancer, proxy).
+\end{itemize}
+
+MediLink implementează un API RESTful complet, cu peste 80 de endpoint-uri organizate logic pe resurse: \code{/api/auth}, \code{/api/users}, \code{/api/patients}, \code{/api/doctors}, \code{/api/appointments}, \code{/api/medical-records}, \code{/api/vitals}, \code{/api/messages}, \code{/api/notifications} și altele.
+
+\subsection{Arhitectura Single Page Application (SPA)}
+
+Frontendurile moderne sunt construite ca \textbf{Single Page Applications (SPA)}, în care navigarea între secțiuni nu implică reîncărcarea completă a paginii. Browserul descarcă inițial un set de resurse JavaScript, CSS și HTML, după care toate tranzițiile de navigare sunt gestionate de client, prin actualizarea dinamică a DOM-ului. Comunicarea cu serverul se face exclusiv prin apeluri API asincrone (fetch/XHR), fără reîncărcare de pagină.
+
+Avantajele arhitecturii SPA includ o experiență de utilizare fluidă (similară aplicațiilor native), reducerea sarcinii pe server și posibilitatea de a construi interfețe complexe și reactive. Dezavantajele includ timpul inițial de încărcare mai mare și complexitatea adițională pentru SEO și indexarea motoarelor de căutare — aspecte irelevante pentru MediLink, care este o aplicație de uz intern, nu un site public.
+
+\section{FastAPI — Framework-ul backend}
+
+\subsection{Prezentare generală}
+
+\textbf{FastAPI} \cite{fastapi2024} este un framework web modern pentru Python, creat de Sebastián Ramírez și lansat în 2018. Bazat pe standardul \textbf{ASGI} (\textit{Asynchronous Server Gateway Interface}), FastAPI suportă nativ programarea asincronă prin cuvintele cheie \code{async}/\code{await} ale lui Python 3.7+, permițând gestionarea unui număr mare de conexiuni concurente cu un consum redus de resurse.
+
+Conform benchmark-urilor independente \cite{techempower2024}, FastAPI se situează printre cele mai performante framework-uri web, cu viteze comparabile cu Go și Node.js, depășind semnificativ Django și Flask în scenariile de I/O-bound (acces la baze de date, apeluri externe).
+
+\subsection{Caracteristici distinctive}
+
+FastAPI se diferențiază prin câteva caracteristici esențiale pentru MediLink:
+
+\textbf{Validare automată prin Pydantic:} Schema datelor se definește o singură dată, ca modele Python cu tipuri adnotate, iar FastAPI generează automat logica de validare, serializare și documentare. Orice cerere HTTP cu date invalide primește automat un răspuns 422 cu detalii despre câmpurile eronate.
+
+\begin{lstlisting}[language=Python3, caption={Exemplu model Pydantic în MediLink}]
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+    role: str
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+\end{lstlisting}
+
+\textbf{Documentație automată OpenAPI:} FastAPI generează automat o interfață Swagger UI interactivă la \code{/api/docs} și o documentație ReDoc la \code{/api/redoc}, bazate pe specificația OpenAPI 3.0. Aceasta permite testarea API-ului direct din browser, fără instrumente suplimentare.
+
+\textbf{Dependency Injection:} Sistemul de dependențe al FastAPI permite injectarea automată a resurselor comune (sesiunea bazei de date, utilizatorul autentificat, permisiunile RBAC) în funcțiile handler, eliminând codul boilerplate.
+
+\subsection{Dependency Injection în MediLink}
+
+MediLink utilizează extensiv sistemul de dependențe FastAPI pentru autentificare și control al accesului:
+
+\begin{lstlisting}[language=Python3, caption={Dependency Injection pentru autentificare}]
+from fastapi import Depends, HTTPException
+from app.middleware.auth import get_current_user
+from app.core.database import get_db
+
+@router.get("/medical-records/patient/{patient_id}")
+async def get_patient_records(
+    patient_id: str,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role not in ["doctor", "admin", "assistant"]:
+        raise HTTPException(403, "Acces interzis")
+    # ...
+\end{lstlisting}
+
+\section{Angular 19 — Framework-ul frontend}
+
+\subsection{Prezentare generală}
+
+\textbf{Angular} \cite{angular2024} este un framework TypeScript complet pentru construirea de aplicații web, dezvoltat și menținut de Google. Spre deosebire de React sau Vue (care sunt biblioteci UI), Angular este un framework \textit{opinionated}, care include soluții integrate pentru rutare, formulare, comunicare HTTP, testare și gestionarea stării.
+
+MediLink folosește \textbf{Angular 19}, cea mai recentă versiune majoră, care introduce componente standalone (fără module NgModule), îmbunătățiri semnificative ale performanței prin Ivy renderer și suport nativ pentru semnale reactive.
+
+\subsection{Componente Standalone}
+
+Arhitectura MediLink adoptă în întregime paradigma \textbf{componentelor standalone}, introdusă în Angular 14 și stabilizată în Angular 17. Fiecare componentă declară explicit dependențele sale (alte componente, directive, pipe-uri, module Angular Material), eliminând necesitatea NgModule-urilor și simplificând semnificativ structura aplicației:
+
+\begin{lstlisting}[language=TypeScript, caption={Componentă standalone Angular în MediLink}]
+@Component({
+  selector: 'app-vitals',
+  standalone: true,
+  imports: [
+    CommonModule, MatCardModule, MatButtonModule,
+    NgApexchartsModule, TablerIconsModule,
+  ],
+  templateUrl: './vitals.html',
+})
+export class VitalsComponent implements OnInit {
+  vitals: VitalSign[] = [];
+
+  constructor(private api: ApiService, private auth: AuthService) {}
+
+  ngOnInit(): void {
+    this.loadVitals();
+  }
+}
+\end{lstlisting}
+
+\subsection{Angular Material Design 3}
+
+Interfața MediLink este construită pe \textbf{Angular Material} cu tema \textbf{Material Design 3} (M3), sistemul de design al Google. Componentele Material oferă accesibilitate built-in (ARIA attributes, navigare cu tastatura), suport pentru teme light/dark și un set consistent de variabile CSS (\code{--mat-sys-primary}, \code{--mat-sys-surface}, etc.) care se adaptează automat la tema selectată.
+
+\section{PostgreSQL — Baza de date}
+
+\subsection{Prezentare generală}
+
+\textbf{PostgreSQL} \cite{postgresql2024} este un sistem de gestiune a bazelor de date relaționale (RDBMS) open-source, cu o istorie de dezvoltare de peste 35 de ani. Recunoscut pentru fiabilitate, conformitate strictă cu standardele SQL și un set bogat de funcționalități avansate, PostgreSQL este alegerea preferată pentru aplicații critice care necesită integritate a datelor.
+
+MediLink utilizează PostgreSQL 16, beneficiind de:
+\begin{itemize}
+  \item Tipul de date \textbf{UUID} nativ, utilizat ca cheie primară pentru toate entitățile;
+  \item Tipul \textbf{JSONB} pentru stocarea datelor semi-structurate (lista de medicamente dintr-o prescripție, mesajele unui chat AI);
+  \item \textbf{Tranzacții ACID} pentru garantarea integrității datelor în operațiile complexe;
+  \item \textbf{Full-text search} pentru căutarea globală în platformă;
+  \item Tipul \textbf{ENUM} pentru câmpuri cu valori predefinite (roluri utilizator, status programare).
+\end{itemize}
+
+\subsection{SQLAlchemy ORM}
+
+\textbf{SQLAlchemy} \cite{sqlalchemy2024} este cel mai utilizat ORM (\textit{Object-Relational Mapper}) pentru Python, oferind o abstractizare completă a bazei de date prin maparea tabelelor SQL la clase Python. MediLink utilizează SQLAlchemy 2.0 cu stilul declarativ:
+
+\begin{lstlisting}[language=Python3, caption={Model SQLAlchemy pentru entitatea User}]
+class User(Base):
+    __tablename__ = "users"
+
+    id             = Column(UUID(as_uuid=True), primary_key=True,
+                            default=uuid.uuid4)
+    email          = Column(String, unique=True, nullable=False, index=True)
+    first_name     = Column(String, nullable=True)
+    last_name      = Column(String, nullable=True)
+    hashed_password= Column(String, nullable=True)
+    role           = Column(Enum(UserRole), nullable=False)
+    phone          = Column(String, nullable=True)
+    birth_date     = Column(String, nullable=True)
+    mfa_secret     = Column(String, nullable=True)
+    email_notifications = Column(Boolean, default=True)
+    is_active      = Column(Boolean, default=True)
+    created_at     = Column(DateTime(timezone=True),
+                            server_default=func.now())
+\end{lstlisting}
+
+\subsection{Alembic — Migrații ale schemei}
+
+Gestionarea modificărilor schemei bazei de date se realizează prin \textbf{Alembic} \cite{alembic2024}, un instrument de migrații pentru SQLAlchemy. Fiecare modificare structurală a bazei de date (adăugare tabel, coloană nouă, index) este reprezentată ca un fișier de migrație Python versionat, cu funcții \code{upgrade()} și \code{downgrade()}, permițând evoluția controlată a schemei în producție.
+
+\section{Redis — Cache și sesiuni}
+
+\textbf{Redis} \cite{redis2024} (\textit{Remote Dictionary Server}) este o bază de date în memorie de tip cheie-valoare, utilizată în MediLink pentru:
+\begin{itemize}
+  \item Stocarea refresh token-urilor invalidate (blacklist pentru logout securizat);
+  \item Cache pentru sesiunile WebSocket active;
+  \item Gestionarea cozilor de task-uri pentru notificări asincrone.
+\end{itemize}
+
+Grație timpilor de acces sub milisecundă, Redis este soluția ideală pentru date volatile cu acces frecvent, fără a suprasolicita baza de date PostgreSQL.
+
+\section{Securitate}
+
+\subsection{Autentificare JWT}
+
+\textbf{JSON Web Token} (JWT) \cite{rfc7519} este un standard deschis (RFC 7519) pentru transmiterea securizată a informațiilor între părți ca obiect JSON semnat criptografic. MediLink implementează un flux de autentificare cu două token-uri:
+
+\begin{itemize}
+  \item \textbf{Access token} — valabil 15 minute, transportat în header-ul HTTP \code{Authorization: Bearer <token>}, conține ID-ul utilizatorului și rolul acestuia;
+  \item \textbf{Refresh token} — valabil 7 zile, stocat în cookie HTTP-Only (inaccesibil din JavaScript), utilizat exclusiv pentru obținerea unor noi access token-uri.
+\end{itemize}
+
+Algoritmul de semnare utilizat este \textbf{HS256} (HMAC-SHA256), cu o cheie secretă de minimum 256 de biți.
+
+\subsection{Autentificare în doi factori (2FA/TOTP)}
+
+MediLink implementează autentificarea în doi factori opțională bazată pe protocolul \textbf{TOTP} (\textit{Time-based One-Time Password}), standardizat în RFC 6238 \cite{rfc6238}. Implementarea este compatibilă cu aplicațiile Google Authenticator, Authy și Microsoft Authenticator.
+
+Fluxul de activare 2FA implică: generarea unui secret TOTP pentru utilizator, afișarea unui cod QR scanabil, verificarea unui cod generat de aplicație pentru confirmare și stocarea secretului criptat în baza de date. La autentificare, dacă 2FA este activat, utilizatorul este redirecționat la pasul de verificare TOTP după introducerea credențialelor.
+
+\subsection{Criptarea datelor medicale sensibile}
+
+Datele medicale sensibile (diagnostice, tratamente, rezultate analize, CNP) sunt criptate în baza de date folosind \textbf{Fernet} — o implementare simetrică a AES-128-CBC cu HMAC-SHA256 pentru autentificare, din biblioteca \textit{cryptography} pentru Python \cite{cryptography2024}.
+
+Criptarea este transparentă pentru codul de business, implementată printr-un \textbf{TypeDecorator SQLAlchemy} personalizat care interceptează operațiile de citire/scriere la nivel de coloană. Cheia de criptare este stocată exclusiv în variabile de mediu, niciodată în codul sursă sau baza de date.
+
+\subsection{RBAC — Control al accesului bazat pe roluri}
+
+\textbf{Role-Based Access Control} (RBAC) \cite{sandhu1996rbac} este un model de control al accesului în care permisiunile sunt asociate rolurilor, iar utilizatorii primesc roluri. MediLink definește patru roluri: \code{admin}, \code{doctor}, \code{assistant} și \code{patient}, fiecare cu un set specific de permisiuni pentru fiecare resursă a API-ului.
+
+\section{Inteligența artificială în medicină}
+
+\subsection{Large Language Models (LLM)}
+
+\textbf{Modelele lingvistice mari} (LLM) sunt rețele neuronale de tip transformator \cite{vaswani2017attention} antrenate pe corpusuri masive de text, capabile să genereze text coerent, să răspundă la întrebări complexe și să realizeze raționamente în lanț. Modelul \textbf{Llama 3.3 70B} \cite{meta2024llama}, dezvoltat de Meta AI, este utilizat în MediLink prin \textbf{API-ul Groq} \cite{groq2024}, care oferă inferență LLM extrem de rapidă (150+ token-uri/secundă) prin hardware specializat LPU (\textit{Language Processing Unit}).
+
+\subsection{Aplicații AI în MediLink}
+
+\textbf{Chatbot medical contextual:} Pacienții pot conversa cu un asistent AI medical care menține contextul conversației (ultimele 10 schimburi), are acces la profilul medical al pacientului (diagnostice cronice, alergii, medicație curentă) și este instruit printr-un prompt de sistem să ofere informații generale, să recomande consultul medical pentru situații urgente și să nu înlocuiască sfatul medicului.
+
+\textbf{Predicție risc clinic:} Pentru fiecare pacient, medicul poate solicita o evaluare AI a riscului medical, pe o scală de la 1 la 10. Modelul primește ca context: vârsta și sexul pacientului, condițiile cronice, ultima medicamente prescrise, ultimele analize și semnele vitale recente. Răspunsul include scorul de risc, justificarea și recomandări clinice concrete.
+
+\textbf{Generator de raport PDF:} La cererea medicului, AI-ul generează un raport medical narativ complet pentru un pacient, structurat pe secțiuni (sumar clinic, evoluție, plan terapeutic, recomandări), care este convertit în format PDF.
+
+\section{Comunicare în timp real}
+
+\subsection{WebSockets}
+
+\textbf{WebSockets} \cite{rfc6455} (RFC 6455) reprezintă un protocol de comunicare bidirecțional full-duplex peste o singură conexiune TCP persistentă. Spre deosebire de HTTP (care funcționează prin cerere-răspuns), WebSockets permit serverului să trimită date clientului în orice moment, fără ca acesta să facă o cerere prealabilă.
+
+MediLink utilizează WebSockets pentru:
+\begin{itemize}
+  \item Livrarea instantanee a notificărilor sistem (confirmare programare, alertă semne vitale, mesaj nou);
+  \item Actualizarea în timp real a badge-ului cu notificări necitite din header;
+  \item Semnalizarea pentru teleconsultațiile WebRTC (schimbul de SDP offers/answers și ICE candidates).
+\end{itemize}
+
+\subsection{WebRTC — Teleconsultații video}
+
+\textbf{WebRTC} (\textit{Web Real-Time Communication}) \cite{webrtc2024} este un set de standarde și API-uri web care permit comunicarea audio-video și schimbul de date direct între browsere (peer-to-peer), fără a necesita un server intermediar pentru fluxul media.
+
+Procesul de stabilire a unei sesiuni WebRTC implică:
+\begin{enumerate}
+  \item \textbf{Semnalizare} — schimbul de descriptori de sesiune SDP (\textit{Session Description Protocol}) și candidați ICE (\textit{Interactive Connectivity Establishment}) prin canalul WebSocket;
+  \item \textbf{Negocierea codecurilor} — browserele se pun de acord asupra codecurilor audio (Opus) și video (VP8/H.264) suportate;
+  \item \textbf{Traversarea NAT} — protocolul ICE găsește calea optimă de conectivitate (direct sau prin STUN);
+  \item \textbf{Transmiterea media} — fluxurile audio/video sunt criptate cu DTLS-SRTP și transmise peer-to-peer.
+\end{enumerate}
+
+\section{Containerizare cu Docker}
+
+\textbf{Docker} \cite{docker2024} este o platformă de containerizare care permite împachetarea aplicațiilor împreună cu toate dependențele lor într-o unitate izolată portabilă numită \textbf{container}. Spre deosebire de mașinile virtuale, containerele partajează kernel-ul sistemului de operare gazdă, oferind izolare cu un overhead minim.
+
+\textbf{Docker Compose} permite definirea și orchestrarea unei stive multi-container printr-un singur fișier YAML (\code{docker-compose.yml}). Stack-ul MediLink este definit ca cinci servicii interconectate: \code{backend} (FastAPI), \code{frontend} (Angular + Nginx), \code{db} (PostgreSQL 16), \code{redis} (Redis 7) și \code{nginx} (reverse proxy).
+
+Avantajele arhitecturii containerizate pentru MediLink includ: portabilitate completă (rulează identic pe orice sistem cu Docker), izolarea mediilor de dezvoltare și producție, scalabilitate orizontală și un proces de deployment simplificat la o singură comandă.
+
+\section{GDPR și protecția datelor medicale}
+
+\textbf{Regulamentul General privind Protecția Datelor} (GDPR) \cite{gdpr2016} (Regulamentul UE 2016/679) stabilește cadrul legal pentru procesarea datelor personale în Uniunea Europeană. Datele medicale sunt clasificate drept \textbf{date speciale} (articolul 9 GDPR), care beneficiază de protecție sporită și pot fi procesate doar în condiții stricte.
+
+MediLink implementează cerințele GDPR prin:
+\begin{itemize}
+  \item \textbf{Dreptul de acces} (Art. 15) — pacienții pot vedea toate datele stocate despre ei;
+  \item \textbf{Dreptul la portabilitate} (Art. 20) — export complet în format HTML și JSON la cerere;
+  \item \textbf{Dreptul la rectificare} (Art. 16) — utilizatorii pot actualiza profilul personal;
+  \item \textbf{Minimizarea datelor} (Art. 5.1.c) — se stochează exclusiv datele necesare funcționării;
+  \item \textbf{Pseudonimizare și criptare} (Art. 32) — datele sensibile sunt criptate în baza de date;
+  \item \textbf{Consimțământ explicit} — pacienții confirmă consimțământul GDPR la înregistrare.
+\end{itemize}

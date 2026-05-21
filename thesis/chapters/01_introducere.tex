@@ -1,0 +1,158 @@
+% ============================================================
+%  Capitolul 1 — Introducere
+% ============================================================
+\chapter{Introducere}
+
+\section{Contextul și motivația lucrării}
+
+Transformarea digitală a sistemului de sănătate reprezintă una dintre cele mai importante tendințe globale ale deceniului curent. Potrivit raportului Organizației Mondiale a Sănătății din 2023 privind sănătatea digitală globală \cite{who2023digital}, digitalizarea serviciilor medicale reduce erorile clinice cu până la 30\%, scurtează timpii de așteptare și îmbunătățește semnificativ comunicarea medic-pacient. La nivel european, Strategia de Sănătate Digitală a Uniunii Europene 2021-2025 \cite{eu_digital_health_2021} stabilește ca obiectiv prioritar crearea unui Spațiu European al Datelor de Sănătate, care să permită accesul securizat și interoperabil la dosarele medicale electronice.
+
+În România, gradul de digitalizare al sistemului sanitar rămâne unul dintre cele mai scăzute din Uniunea Europeană. Conform datelor Ministerului Sănătății \cite{ms_romania_2023}, mai puțin de 15\% dintre medicii de familie utilizează sisteme electronice integrate pentru gestionarea pacienților, majoritatea activităților desfășurându-se pe suport hârtie sau cu instrumente disparate, neintegrate. Această realitate generează numeroase probleme: pierderea istoricului medical al pacienților, imposibilitatea accesului de urgență la informații critice (alergii, medicație curentă), lipsa comunicării eficiente între specialiști și, nu în ultimul rând, o experiență precară a pacientului în relația cu sistemul de sănătate.
+
+MediLink se naște din nevoia concretă de a adresa aceste probleme printr-o soluție modernă, completă și accesibilă, care să poată fi adoptată rapid de unitățile medicale de dimensiuni mici și medii — cabinete medicale, policlinici și centre medicale private — fără a necesita investiții infrastructurale majore, grație arhitecturii bazate pe containere Docker.
+
+Alegerea acestei teme este motivată și de evoluția rapidă a inteligenței artificiale aplicate în medicină. Modelele lingvistice mari (\textit{Large Language Models} — LLM) au demonstrat în studii recente capacitatea de a asista clinicienii în formularea diagnosticelor diferențiale \cite{singhal2023large}, de a interpreta rezultate de laborator și de a genera recomandări terapeutice bazate pe dovezi. Integrarea acestor capabilități într-o platformă medicală accesibilă reprezintă un pas concret spre medicina personalizată și asistată de AI.
+
+\section{Studiu comparativ cu aplicațiile existente}
+
+Piața soluțiilor software pentru gestionarea activității medicale este diversificată, însă majoritatea produselor existente prezintă limitări semnificative din perspectiva integrării, a accesibilității financiare sau a suportului pentru funcționalitățile moderne discutate anterior.
+
+\subsection{Aplicații internaționale}
+
+\textbf{Epic Systems} \cite{epic2024} este considerată cea mai completă platformă de tip Electronic Health Record (EHR) la nivel mondial, utilizată de peste 250 de milioane de pacienți în Statele Unite. Oferă funcționalități avansate de gestionare a dosarelor medicale, integrare cu dispozitive medicale IoT și module de analiză predictivă. Principalele dezavantaje sunt costul prohibitiv (implementarea unei instanțe complete depășind 100 de milioane de dolari pentru un spital mare), complexitatea ridicată a implementării și lipsa suportului nativ pentru legislația europeană GDPR.
+
+\textbf{Doctolib} \cite{doctolib2024}, popular în Franța, Belgia și Germania, oferă un sistem de programări online și teleconsultații, dar se concentrează exclusiv pe gestionarea agendei medicale, lipsind funcționalitățile de dosar medical electronic, semne vitale sau AI integrat.
+
+\textbf{Practo} \cite{practo2024}, utilizat preponderent în India și Asia de Sud-Est, oferă un ecosistem similar cu MediLink, incluzând dosare medicale și teleconsultații. Limitările principale constau în absența conformității cu GDPR, infrastructura cloud centralizată (fără opțiune de deployment local/privat) și lipsa integrării AI generative.
+
+\subsection{Aplicații românești}
+
+\textbf{Hipocrate} \cite{hipocrate2024} este cel mai utilizat sistem de gestionare a activității medicale din România, cu focus pe cabinete medicale de familie și specialitate. Deși acoperă bine nevoile de bază (programări, rețete, scrisori medicale), aplicația are o interfață învechită, nu oferă funcționalități de teleconsultații, mesagerie integrată sau AI, și nu pune la dispoziție un portal dedicat pacientului.
+
+\textbf{MedicalSoft} \cite{medicalsoft2024} și \textbf{MedEVI} sunt soluții similare Hipocrate, orientate în principal spre automatizarea raportărilor către Casa Națională de Asigurări de Sănătate (CNAS), fără accent pe experiența pacientului sau pe funcționalități digitale moderne.
+
+\subsection{Analiza comparativă}
+
+Tabelul \ref{tab:comparatie} prezintă o analiză comparativă a principalelor funcționalități ale aplicațiilor menționate față de MediLink:
+
+\begin{table}[H]
+\centering
+\caption{Comparație MediLink cu aplicații similare}
+\label{tab:comparatie}
+\begin{tabularx}{\textwidth}{|l|X|X|X|X|X|}
+\hline
+\textbf{Funcționalitate} & \textbf{MediLink} & \textbf{Epic} & \textbf{Doctolib} & \textbf{Practo} & \textbf{Hipocrate} \\
+\hline
+Dosar medical electronic & ✓ & ✓ & ✗ & ✓ & ✓ \\
+\hline
+Programări online & ✓ & ✓ & ✓ & ✓ & ✓ \\
+\hline
+Teleconsultații video & ✓ & ✓ & ✓ & ✓ & ✗ \\
+\hline
+Mesagerie în timp real & ✓ & ✓ & ✗ & ✗ & ✗ \\
+\hline
+Semne vitale + grafice & ✓ & ✓ & ✗ & ✓ & ✗ \\
+\hline
+Chat AI medical & ✓ & Parțial & ✗ & ✗ & ✗ \\
+\hline
+Predicție risc AI & ✓ & ✓ & ✗ & ✗ & ✗ \\
+\hline
+Export GDPR & ✓ & ✓ & ✓ & ✗ & ✗ \\
+\hline
+2FA/TOTP & ✓ & ✓ & ✓ & ✗ & ✗ \\
+\hline
+Criptare date sensibile & ✓ & ✓ & ✓ & Parțial & ✗ \\
+\hline
+Portal pacient dedicat & ✓ & ✓ & ✓ & ✓ & ✗ \\
+\hline
+Open source / Docker & ✓ & ✗ & ✗ & ✗ & ✗ \\
+\hline
+Cost accesibil & ✓ & ✗ & ✓ & ✓ & ✓ \\
+\hline
+\end{tabularx}
+\end{table}
+
+Analiza comparativă evidențiază că MediLink se distinge prin combinația unică de funcționalități avansate (AI integrat, WebRTC, WebSockets), conformitate completă cu GDPR, arhitectură containerizată Docker (care permite deployment privat, fără dependență de cloud-ul unui furnizor terț) și accesibilitate — aspecte care nu se regăsesc simultan în niciuna dintre soluțiile existente analizate.
+
+\section{Prezentarea aplicației MediLink}
+
+MediLink este o aplicație web full-stack care implementează un ecosistem medical digital complet pentru patru categorii de utilizatori: \textbf{pacienți}, \textbf{medici}, \textbf{asistenți medicali} și \textbf{administratori}.
+
+\subsection{Funcționalități pentru pacienți}
+
+Pacienții beneficiază de un portal personal complet, care le oferă acces la:
+\begin{itemize}
+  \item \textbf{Dashboard personalizat} cu statistici de sănătate, programările viitoare și ultimele notificări;
+  \item \textbf{Fișă medicală electronică} structurată pe tipuri de înregistrări: consultații, analize de laborator, tratamente, investigații paraclinice și rețete;
+  \item \textbf{Semne vitale} cu posibilitatea de vizualizare a evoluției în timp prin grafice interactive (tensiune arterială, puls, greutate, temperatură, saturație oxigen);
+  \item \textbf{Programări online} cu selectarea medicului, datei și orei disponibile;
+  \item \textbf{Chat medical AI} pentru obținerea de informații medicale generale, bazat pe modelul Llama 3.3 70B;
+  \item \textbf{Mesagerie în timp real} cu medicii curanți și asistenții medicali;
+  \item \textbf{Teleconsultații video} prin WebRTC, fără a necesita instalarea unor aplicații suplimentare;
+  \item \textbf{Export GDPR complet} al tuturor datelor personale și medicale, în format HTML și JSON.
+\end{itemize}
+
+\subsection{Funcționalități pentru medici}
+
+Medicii dispun de instrumente profesionale pentru:
+\begin{itemize}
+  \item Gestionarea listei de pacienți atribuiți, cu acces rapid la fișa completă;
+  \item Adăugarea și editarea înregistrărilor medicale (consultații, analize, tratamente, investigații, rețete);
+  \item Vizualizarea și analiza semnelor vitale ale pacienților prin grafice de tendință;
+  \item \textbf{Predicție risc AI} per pacient — un scor de risc de la 1 la 10, generat de modelul Llama 3.3 70B pe baza istoricului medical, cu recomandări clinice specifice;
+  \item \textbf{Generare raport medical PDF} complet pentru fiecare pacient, bazat pe AI;
+  \item Gestionarea programărilor zilei prin calendar integrat;
+  \item Profil public accesibil pacienților, cu posibilitatea de a primi recenzii.
+\end{itemize}
+
+\subsection{Funcționalități pentru asistenți medicali}
+
+Asistenții medicali pot:
+\begin{itemize}
+  \item Gestiona programările (confirmare, anulare, reprogramare);
+  \item Atribui pacienți la medici;
+  \item Înregistra semne vitale pentru pacienți;
+  \item Accesa statistici agregate despre pacienții clinicii.
+\end{itemize}
+
+\subsection{Funcționalități administrative}
+
+Administratorii au acces la:
+\begin{itemize}
+  \item Dashboard cu statistici globale ale platformei;
+  \item Gestionarea completă a utilizatorilor (activare/dezactivare conturi, atribuire roluri);
+  \item Vizualizarea tuturor programărilor din sistem;
+  \item Jurnalul de audit al acțiunilor utilizatorilor.
+\end{itemize}
+
+\section{Structura lucrării}
+
+Lucrarea este organizată în patru capitole principale:
+
+\textbf{Capitolul 1 — Introducere} prezintă contextul și motivația alegerii temei, realizează un studiu comparativ cu soluțiile existente pe piață și descrie succint aplicația MediLink, contribuțiile originale și structura lucrării.
+
+\textbf{Capitolul 2 — Noțiuni teoretice și tehnologii utilizate} prezintă fundamentele teoretice ale arhitecturilor web moderne și detaliază fiecare tehnologie utilizată în construirea MediLink: FastAPI, Angular 19, PostgreSQL, Redis, SQLAlchemy, JWT, WebSockets, WebRTC, Docker și Groq API.
+
+\textbf{Capitolul 3 — Contribuții personale} constituie nucleul lucrării și prezintă în detaliu toate deciziile de proiectare și implementare: modelul de date, arhitectura REST API, sistemul de autentificare și securitate, implementarea fiecărui modul funcțional și soluțiile tehnice originale adoptate.
+
+\textbf{Capitolul 4 — Concluzii și perspective de dezvoltare} sintetizează contribuțiile realizate, discută limitările actuale ale platformei și propune direcții de extindere și îmbunătățire pentru versiunile viitoare.
+
+\section{Contribuții originale}
+
+Principalele contribuții originale ale acestei lucrări sunt:
+
+\begin{enumerate}
+  \item \textbf{Arhitectura integrată multi-rol} — proiectarea și implementarea unui sistem care servește simultan patru tipuri de utilizatori cu nevoi și permisiuni distincte, printr-un mecanism RBAC (\textit{Role-Based Access Control}) granular implementat ca middleware FastAPI;
+
+  \item \textbf{Sistem de criptare transparentă a datelor medicale sensibile} — implementarea unui \code{TypeDecorator} SQLAlchemy personalizat (\code{EncryptedString}) care criptează automat câmpurile sensibile (CNP, diagnostic, tratament) la scriere și le decriptează la citire, fără modificări în codul de business;
+
+  \item \textbf{Integrarea AI pentru asistență medicală} — utilizarea modelului Llama 3.3 70B prin API-ul Groq pentru trei cazuri de utilizare distincte: chat medical contextual (cu memorie conversațională), predicție risc clinic per pacient și generare raport medical PDF;
+
+  \item \textbf{Teleconsultații video peer-to-peer} — implementarea unui sistem de apeluri video prin WebRTC cu semnalizare bazată pe WebSockets, fără necesitatea unui server de relay (TURN), utilizabil direct în browser;
+
+  \item \textbf{Sistem de notificări în timp real} — arhitectura bazată pe WebSockets pentru livrarea instantanee a notificărilor de sistem, confirmărilor de programare și alertelor de semne vitale anormale;
+
+  \item \textbf{Export GDPR automat} — generarea la cerere a unui document HTML complet și structurat cu toate datele personale și medicale ale unui utilizator, în conformitate cu articolul 20 din GDPR (\textit{dreptul la portabilitatea datelor});
+
+  \item \textbf{Grafice de tendință pentru semne vitale} — vizualizarea interactivă a evoluției temporale a parametrilor vitali cu detectarea automată a valorilor anormale și generarea de alerte.
+\end{enumerate}

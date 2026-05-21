@@ -1,0 +1,72 @@
+% ============================================================
+%  Capitolul 4 — Concluzii și perspective de dezvoltare
+% ============================================================
+\chapter{Concluzii și perspective de dezvoltare}
+
+\section{Concluzii}
+
+Lucrarea de față a prezentat proiectarea și implementarea platformei MediLink — o soluție software completă pentru digitalizarea activității medicale, cu accent pe securitate, conformitate GDPR și integrarea inteligenței artificiale.
+
+Prin parcurgerea etapelor de analiză, proiectare și implementare, au fost atinse toate obiectivele propuse inițial:
+
+\begin{itemize}
+  \item S-a implementat un \textbf{ecosistem medical integrat} care acoperă fluxul complet al activității clinice: de la programare și consultație, la prescripție, monitorizare semne vitale și teleconsultație;
+
+  \item \textbf{Securitatea datelor medicale sensibile} a fost tratată ca cerință de prim rang, nu ca o adăugire ulterioară — criptarea Fernet, autentificarea JWT cu 2FA și mecanismul RBAC granular asigurând o protecție în profunzime;
+
+  \item \textbf{Integrarea AI} a adus valoare practică concretă: chatbot-ul medical oferă pacienților acces instant la informații medicale generale, predicția de risc îi ajută pe medici să prioritizeze cazurile, iar raportul PDF automat reduce semnificativ timpul administrativ;
+
+  \item \textbf{Comunicarea în timp real} prin WebSockets și teleconsultațiile WebRTC au transformat platforma dintr-un simplu sistem de gestionare a datelor într-un ecosistem de comunicare medicală activă;
+
+  \item \textbf{Arhitectura Docker} a garantat portabilitatea și reproductibilitatea completă a soluției — întreaga platformă poate fi pornită pe orice mașină cu o singură comandă.
+\end{itemize}
+
+Comparativ cu soluțiile existente analizate în Capitolul 1, MediLink se distinge prin combinarea unică a tuturor acestor funcționalități într-o singură platformă open-source, containerizată, accesibilă și conformă cu standardele europene de protecție a datelor.
+
+Din punct de vedere tehnic, proiectul a demonstrat eficiența combinației \textbf{FastAPI + Angular 19 + PostgreSQL}: FastAPI pentru viteza de dezvoltare și performanța I/O-asincronă, Angular pentru construirea de interfețe complexe și reactive, iar PostgreSQL pentru fiabilitatea datelor critice. Utilizarea componentelor standalone Angular și a dependency injection FastAPI a condus la un cod modular, testabil și ușor de extins.
+
+\section{Limitări actuale}
+
+În stadiul actual, MediLink prezintă câteva limitări care reprezintă oportunități de îmbunătățire pentru versiunile viitoare:
+
+\begin{itemize}
+  \item \textbf{Infrastructura de semnalizare WebRTC} folosește un server WebSocket centralizat pentru schimbul de mesaje de semnalizare; în scenarii cu mii de apeluri simultane, această componentă ar putea deveni un bottleneck și ar necesita scalare orizontală;
+
+  \item \textbf{Stocarea media} — platforma nu include în prezent funcționalități de stocare a fișierelor atașate fișelor medicale (imagini DICOM, PDF-uri de investigații); aceasta reprezintă o limitare semnificativă față de sistemele EHR enterprise;
+
+  \item \textbf{Integrarea cu sistemele de asigurări} — MediLink nu este integrat cu sistemele CNAS sau ale asigurătorilor privați, ceea ce limitează adoptarea în cabinetele care lucrează cu decontare CNAS;
+
+  \item \textbf{Aplicație mobilă nativă} — platforma este accesibilă pe mobil prin browser (responsive design), dar o aplicație nativă iOS/Android ar oferi o experiență mai bună, notificări push native și acces la senzori (pulsoximetru Bluetooth etc.);
+
+  \item \textbf{Suport multi-tenant} — arhitectura actuală este concepută pentru o singură unitate medicală; scalarea la nivel de rețea de clinici ar necesita implementarea izolării datelor la nivel de organizație.
+\end{itemize}
+
+\section{Perspective de dezvoltare}
+
+Pe baza arhitecturii actuale, MediLink poate fi extins în mai multe direcții valoroase:
+
+\subsection{Integrarea dispozitivelor medicale IoT}
+
+Wearable-urile medicale moderne (smartwatch-uri cu EKG, glucometre Bluetooth, pulsoximetrele IoT) pot trimite date direct în platforma MediLink prin API-ul de semne vitale. Integrarea cu standardul \textbf{HL7 FHIR} (\textit{Fast Healthcare Interoperability Resources}) \cite{fhir2024} ar permite interoperabilitatea cu orice dispozitiv medical certificat.
+
+\subsection{Diagnosticare asistată AI prin imagini medicale}
+
+Integrarea unui model de viziune computațională (de exemplu, prin API-ul OpenAI Vision) ar permite analiza automată a imaginilor medicale atașate fișelor: interpretarea radiografiilor, detecția leziunilor dermatologice din fotografii, analiza EKG-urilor digitizate.
+
+\subsection{Analiză predictivă populațională}
+
+Datele agregate (anonimizate) ale platformei pot fi folosite pentru modele de analiză predictivă la nivel de populație: identificarea tendințelor epidemiologice locale, predicția sezonalității bolilor, optimizarea planificării resurselor medicale.
+
+\subsection{Aplicație mobilă}
+
+Dezvoltarea unei aplicații mobile native cu \textbf{Flutter} \cite{flutter2024} (care permite generarea de aplicații iOS și Android dintr-o singură bază de cod) ar extinde semnificativ accesibilitatea platformei, adăugând notificări push, acces la camera pentru teleconsultații optimizate și integrare cu senzori Bluetooth.
+
+\subsection{Conformitate HL7 FHIR și Spațiul European al Datelor de Sănătate}
+
+Implementarea standardului HL7 FHIR pentru exportul și importul datelor medicale ar permite MediLink să devină interoperabil cu alte sisteme EHR și să se integreze în inițiativa \textbf{European Health Data Space} (EHDS) \cite{ehds2022}, care va deveni obligatorie în statele membre UE până în 2027.
+
+\subsection{Sistem de telemedicină asincronă}
+
+Extinderea platformei cu funcționalități de telemedicină asincronă — trimiterea de fotografii, filmulețe sau înregistrări audio pentru evaluare medicală ulterioară, fără a fi necesară o sesiune sincronă — ar crește semnificativ accesibilitatea pentru pacienții din zone rurale.
+
+În concluzie, MediLink demonstrează că o platformă medicală modernă, completă și securizată poate fi construită cu tehnologii open-source, la un nivel de complexitate și calitate comparabil cu soluțiile comerciale, constituind o bază solidă pentru o continuare academică (proiect de masterat, doctorat) sau o aplicație cu potențial real de adoptare în sistemul de sănătate românesc.
