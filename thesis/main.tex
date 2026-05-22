@@ -89,7 +89,7 @@
 % -- Hyperlinks -----------------------------------------------
 \usepackage[
   colorlinks=true,
-  linkcolor=utblue,
+  linkcolor=black,
   urlcolor=utblue,
   citecolor=utblue,
   pdftitle={MediLink -- Platforma Medicala Digitala},
@@ -203,15 +203,18 @@
 \setcounter{page}{1}
 
 % -- Abstract -------------------------------------------------
-\chapter*{Rezumat}
-\addcontentsline{toc}{chapter}{Rezumat}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
 
-MediLink este o platformă medicală digitală completă, dezvoltată ca lucrare de licență, cu scopul de a digitaliza și eficientiza procesele din sistemul de sănătate. Aplicația conectează pacienți, medici și asistenți medicali într-un ecosistem unificat, securizat și conform cu Regulamentul General privind Protecția Datelor (GDPR).
+\setlength{\parindent}{1.5cm}
 
-Platforma oferă funcționalități complete pentru gestionarea fișelor medicale electronice, programărilor online, semnelor vitale cu grafice de evoluție temporală, prescripțiilor medicale, teleconsultațiilor video prin tehnologia WebRTC și mesageriei în timp real prin WebSockets. Un aspect distinctiv al MediLink este integrarea inteligenței artificiale: un asistent de chat medical bazat pe modelul Llama 3.3 70B (prin API-ul Groq), un sistem de predicție a riscului medical per pacient și un generator de rapoarte medicale PDF bazat pe AI.
+Digitalizarea sistemului de sănătate reprezintă una dintre cele mai importante provocări ale deceniului curent. În România, gradul redus de adoptare a soluțiilor software medicale, lipsa interoperabilității între sisteme și absența unui portal dedicat pacientului generează ineficiențe semnificative: pierderea istoricului medical, imposibilitatea accesului rapid la informații critice și o experiență precară în relația medic-pacient. Soluțiile comerciale existente fie sunt prohibitiv de costisitoare, fie nu acoperă întregul flux al activității clinice, fie nu respectă cerințele legislative europene privind protecția datelor.
 
-Din punct de vedere tehnic, MediLink este construit pe o arhitectură modernă client-server, utilizând FastAPI (Python) pentru backend, Angular 19 pentru frontend, PostgreSQL ca bază de date relațională și Redis pentru gestionarea sesiunilor și cache-ului. Securitatea datelor medicale sensibile este asigurată prin criptare Fernet (AES-128-CBC), autentificare JWT cu refresh tokens și opțiune de autentificare în doi factori (2FA/TOTP).
+Lucrarea de față prezintă proiectarea și implementarea platformei MediLink --- o aplicație web medicală completă care adresează aceste probleme printr-o arhitectură modernă, securizată și accesibilă. Platforma integrează într-un ecosistem unificat gestionarea dosarelor medicale electronice, programările online, monitorizarea semnelor vitale, prescripțiile medicale, mesageria în timp real și teleconsultațiile video. Un element distinctiv al soluției propuse este integrarea inteligenței artificiale: un asistent conversațional medical, un sistem de predicție a riscului clinic per pacient și un generator automat de rapoarte PDF, toate bazate pe modelul lingvistic Llama 3.3 70B.
 
+Din punct de vedere tehnic, MediLink utilizează FastAPI pentru backend, Angular 19 pentru frontend și PostgreSQL ca bază de date relațională. Securitatea datelor medicale sensibile este tratată ca cerință de prim rang: criptarea câmpurilor sensibile prin algoritmul Fernet, autentificarea bazată pe JWT cu suport pentru autentificarea în doi factori (2FA/TOTP) și un mecanism granular de control al accesului bazat pe roluri (RBAC) asigură conformitatea cu Regulamentul General privind Protecția Datelor (GDPR). Întreaga soluție este containerizată cu Docker, putând fi pornită pe orice infrastructură printr-o singură comandă.
+
+\setlength{\parindent}{0pt}
 \bigskip
 \noindent\textbf{Cuvinte cheie:} platformă medicală, FastAPI, Angular, WebRTC, inteligență artificială, GDPR, JWT, WebSockets, teleconsultații, fișe medicale electronice.
 
