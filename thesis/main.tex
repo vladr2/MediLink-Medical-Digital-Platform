@@ -128,12 +128,12 @@
 
 % -- Chapter / Section Titles ---------------------------------
 \titleformat{\chapter}[block]
-  {\normalfont\Large\bfseries\color{utdark}}
+  {\normalfont\Large\bfseries}
   {\thechapter.}{0.8em}{}
 \titlespacing*{\chapter}{0pt}{20pt}{15pt}
 
 \titleformat{\section}
-  {\normalfont\large\bfseries\color{utdark}}
+  {\normalfont\large\bfseries}
   {\thesection}{0.8em}{}
 
 \titleformat{\subsection}
@@ -167,12 +167,11 @@
 
   % Titlu principal
   \begin{center}
-    {\fontsize{26}{32}\selectfont\bfseries\color{utdark} LUCRARE DE LICENȚĂ}
+    {\fontsize{26}{32}\selectfont\bfseries LUCRARE DE LICENȚĂ}
 
     \vspace{1.2cm}
 
-    {\fontsize{18}{24}\selectfont\bfseries\color{utblue}
-      MediLink: Platformă Medicală Digitală}
+    {\fontsize{18}{24}\selectfont\bfseries MediLink: Platformă Medicală Digitală}
   \end{center}
 
   \vspace*{\fill}
@@ -182,41 +181,25 @@
   \noindent
   \begin{minipage}[t]{0.5\textwidth}
     \raggedright
-    {\small\color{utdark} Conducător științific:}\\[0.4cm]
+    {\small Conducător științific:}\\[0.4cm]
     {\normalsize Lect. Dr. Bocu Răzvan}
   \end{minipage}%
   \begin{minipage}[t]{0.5\textwidth}
     \raggedleft
-    {\small\color{utdark} Absolvent:}\\[0.4cm]
+    {\small Absolvent:}\\[0.4cm]
     {\normalsize Rădoi Vlad Cristian}
   \end{minipage}
 
   \vspace{1.5cm}
 
   \begin{center}
-    {\normalsize\bfseries\color{utdark} Brașov, 2026}
+    {\normalsize\bfseries Brașov, 2026}
   \end{center}
 
 \end{titlepage}
 
 \pagenumbering{roman}
 \setcounter{page}{1}
-
-% -- Abstract -------------------------------------------------
-\chapter*{Abstract}
-\addcontentsline{toc}{chapter}{Abstract}
-
-\setlength{\parindent}{1.5cm}
-
-Digitalizarea sistemului de sănătate reprezintă una dintre cele mai importante provocări ale deceniului curent. În România, gradul redus de adoptare a soluțiilor software medicale, lipsa interoperabilității între sisteme și absența unui portal dedicat pacientului generează ineficiențe semnificative: pierderea istoricului medical, imposibilitatea accesului rapid la informații critice și o experiență precară în relația medic-pacient. Soluțiile comerciale existente fie sunt prohibitiv de costisitoare, fie nu acoperă întregul flux al activității clinice, fie nu respectă cerințele legislative europene privind protecția datelor.
-
-Lucrarea de față prezintă proiectarea și implementarea platformei MediLink --- o aplicație web medicală completă care adresează aceste probleme printr-o arhitectură modernă, securizată și accesibilă. Platforma integrează într-un ecosistem unificat gestionarea dosarelor medicale electronice, programările online, monitorizarea semnelor vitale, prescripțiile medicale, mesageria în timp real și teleconsultațiile video. Un element distinctiv al soluției propuse este integrarea inteligenței artificiale: un asistent conversațional medical, un sistem de predicție a riscului clinic per pacient și un generator automat de rapoarte PDF, toate bazate pe modelul lingvistic Llama 3.3 70B.
-
-Din punct de vedere tehnic, MediLink utilizează FastAPI pentru backend, Angular 19 pentru frontend și PostgreSQL ca bază de date relațională. Securitatea datelor medicale sensibile este tratată ca cerință de prim rang: criptarea câmpurilor sensibile prin algoritmul Fernet, autentificarea bazată pe JWT cu suport pentru autentificarea în doi factori (2FA/TOTP) și un mecanism granular de control al accesului bazat pe roluri (RBAC) asigură conformitatea cu Regulamentul General privind Protecția Datelor (GDPR). Întreaga soluție este containerizată cu Docker, putând fi pornită pe orice infrastructură printr-o singură comandă.
-
-\setlength{\parindent}{0pt}
-\bigskip
-\noindent\textbf{Cuvinte cheie:} platformă medicală, FastAPI, Angular, WebRTC, inteligență artificială, GDPR, JWT, WebSockets, teleconsultații, fișe medicale electronice.
 
 % -- Table of Contents ----------------------------------------
 \tableofcontents
