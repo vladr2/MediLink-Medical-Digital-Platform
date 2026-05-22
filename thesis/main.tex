@@ -1,37 +1,44 @@
 % ============================================================
-%  MediLink — Platformă Medicală Digitală
-%  Lucrare de licență — Universitatea Transilvania din Brașov
-%  Facultatea de Matematică și Informatică
+%  MediLink -- Platforma Medicala Digitala
+%  Lucrare de licenta -- Universitatea Transilvania din Brasov
+%  Facultatea de Matematica si Informatica
 % ============================================================
 \documentclass[12pt, a4paper, oneside]{report}
 
-% ── Encoding & Language ──────────────────────────────────────
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+% -- Encoding & Language --------------------------------------
+% LuaLaTeX gestioneaza UTF-8 nativ
+\usepackage{fontspec}
 \usepackage[romanian]{babel}
+\usepackage{csquotes}
 
-% ── Page Layout ──────────────────────────────────────────────
+% -- Fonts ----------------------------------------------------
+\setmainfont{Times New Roman}
+\usepackage{setspace}
+\onehalfspacing
+
+% -- Page Layout ----------------------------------------------
 \usepackage[
   top=2.5cm, bottom=2.5cm,
   left=3.0cm, right=2.5cm
 ]{geometry}
 
-% ── Fonts & Spacing ──────────────────────────────────────────
-\usepackage{setspace}
-\onehalfspacing
-\usepackage{lmodern}
-
-% ── Graphics & Colors ────────────────────────────────────────
+% -- Graphics & Colors ----------------------------------------
 \usepackage{graphicx}
 \usepackage{xcolor}
-\definecolor{primary}{RGB}{25, 118, 210}
-\definecolor{codebg}{RGB}{248, 248, 248}
-\definecolor{coderule}{RGB}{200, 200, 200}
+% Culori oficiale UTBv
+\definecolor{utblue}{RGB}{0, 84, 166}
+\definecolor{utdark}{RGB}{88, 88, 90}
+\definecolor{primary}{RGB}{0, 84, 166}
+\definecolor{codebg}{RGB}{248, 248, 250}
+\definecolor{coderule}{RGB}{210, 210, 210}
+\definecolor{keywordcolor}{RGB}{0, 84, 166}
+\definecolor{stringcolor}{RGB}{180, 60, 0}
+\definecolor{commentcolor}{RGB}{100, 100, 100}
 
-% ── Code Listings ────────────────────────────────────────────
+% -- Code Listings --------------------------------------------
 \usepackage{listings}
 \lstset{
-  basicstyle=\ttfamily\small,
+  basicstyle=\ttfamily\footnotesize,
   backgroundcolor=\color{codebg},
   frame=single,
   rulecolor=\color{coderule},
@@ -42,58 +49,59 @@
   numbers=left,
   numberstyle=\tiny\color{gray},
   numbersep=8pt,
-  xleftmargin=12pt,
+  xleftmargin=14pt,
   captionpos=b,
+  keywordstyle=\color{keywordcolor}\bfseries,
+  stringstyle=\color{stringcolor},
+  commentstyle=\color{commentcolor}\itshape,
 }
 \lstdefinelanguage{TypeScript}{
   keywords={import, export, from, class, interface, type, const, let, var,
-            function, return, if, else, for, while, new, this, extends, implements,
-            async, await, public, private, protected, readonly, void, string,
-            number, boolean, any, null, undefined, true, false, of, in},
+            function, return, if, else, for, while, new, this, extends,
+            implements, async, await, public, private, protected, readonly,
+            void, string, number, boolean, any, null, undefined, true, false,
+            of, in, constructor, Injectable, Component, OnInit, Input, Output,
+            EventEmitter, HttpClient, Observable, subscribe, pipe, map, tap},
   sensitive=true,
   comment=[l]{//},
   morecomment=[s]{/*}{*/},
   morestring=[b]",
   morestring=[b]',
   morestring=[b]`,
-  keywordstyle=\color{blue}\bfseries,
-  stringstyle=\color{orange},
-  commentstyle=\color{gray}\itshape,
 }
 \lstdefinelanguage{Python3}{
   keywords={def, class, import, from, return, if, else, elif, for, while,
             with, as, try, except, raise, in, not, and, or, True, False, None,
-            async, await, yield, lambda, pass, break, continue},
+            async, await, yield, lambda, pass, break, continue, self, super,
+            property, staticmethod, classmethod},
   sensitive=true,
   comment=[l]{\#},
   morestring=[b]",
   morestring=[b]',
-  keywordstyle=\color{blue}\bfseries,
-  stringstyle=\color{orange},
-  commentstyle=\color{gray}\itshape,
+  morestring=[b]{"""},
 }
 
-% ── Tables ───────────────────────────────────────────────────
+% -- Tables ---------------------------------------------------
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{multirow}
 
-% ── Math ─────────────────────────────────────────────────────
+% -- Math -----------------------------------------------------
 \usepackage{amsmath}
 \usepackage{amssymb}
 
-% ── Hyperlinks ───────────────────────────────────────────────
+% -- Hyperlinks -----------------------------------------------
 \usepackage[
   colorlinks=true,
-  linkcolor=primary,
-  urlcolor=primary,
-  citecolor=primary,
-  pdftitle={MediLink — Platformă Medicală Digitală},
-  pdfauthor={Vlad Radoi},
+  linkcolor=utblue,
+  urlcolor=utblue,
+  citecolor=utblue,
+  pdftitle={MediLink -- Platforma Medicala Digitala},
+  pdfauthor={Radoi Vlad-Rares},
 ]{hyperref}
 
-% ── Bibliography ─────────────────────────────────────────────
+% -- Bibliography ---------------------------------------------
 \usepackage[
   backend=biber,
   style=numeric,
@@ -102,7 +110,7 @@
 ]{biblatex}
 \addbibresource{bibliography.bib}
 
-% ── Utilities ────────────────────────────────────────────────
+% -- Utilities ------------------------------------------------
 \usepackage{enumitem}
 \usepackage{float}
 \usepackage{caption}
@@ -111,80 +119,113 @@
 \usepackage{titlesec}
 \usepackage{tocloft}
 \usepackage{microtype}
-\usepackage{csquotes}
 \usepackage{array}
 \usepackage{footnote}
+\usepackage{tikz}
+\setlength{\headheight}{14pt}
 
-% ── Header / Footer ──────────────────────────────────────────
+% -- Header / Footer ------------------------------------------
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\leftmark}
-\fancyhead[R]{\small MediLink}
+\fancyhead[L]{\small\textcolor{utdark}{\leftmark}}
+\fancyhead[R]{\small\textcolor{utblue}{MediLink}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{utblue}\leaders\hrule height \headrulewidth\hfill}}
 
-% ── Chapter / Section Titles ─────────────────────────────────
+% -- Chapter / Section Titles ---------------------------------
 \titleformat{\chapter}[block]
-  {\normalfont\Large\bfseries\color{primary}}
-  {\thechapter.}{1em}{}
-\titlespacing*{\chapter}{0pt}{20pt}{15pt}
+  {\normalfont\Large\bfseries\color{utblue}}
+  {\thechapter.}{0.8em}{}
+  [\vspace{2pt}{\color{utblue}\titlerule[1.5pt]}]
+\titlespacing*{\chapter}{0pt}{20pt}{18pt}
 
 \titleformat{\section}
-  {\normalfont\large\bfseries}
-  {\thesection}{1em}{}
+  {\normalfont\large\bfseries\color{utdark}}
+  {\thesection}{0.8em}{}
 
 \titleformat{\subsection}
   {\normalfont\normalsize\bfseries}
-  {\thesubsection}{1em}{}
+  {\thesubsection}{0.8em}{}
 
-% ── Custom Commands ──────────────────────────────────────────
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\itshape}
+  {\thesubsubsection}{0.8em}{}
+
+% -- TOC Styling ----------------------------------------------
+\renewcommand{\cftchapfont}{\bfseries\color{utblue}}
+\renewcommand{\cftchappagefont}{\bfseries\color{utblue}}
+\setlength{\cftbeforechapskip}{6pt}
+
+% -- Custom Commands ------------------------------------------
 \newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\api}[1]{\texttt{\color{primary}#1}}
+\newcommand{\api}[1]{\texttt{\color{utblue}#1}}
 
 % ============================================================
 \begin{document}
 
-% ── Title Page ───────────────────────────────────────────────
+% -- Title Page -----------------------------------------------
 \begin{titlepage}
-  \centering
-  \vspace*{1cm}
+  \thispagestyle{empty}
+  \newgeometry{top=1.5cm, bottom=2cm, left=2.5cm, right=2.5cm}
 
-  {\Large \textbf{UNIVERSITATEA TRANSILVANIA DIN BRAȘOV}}\\[0.3cm]
-  {\large Facultatea de Matematică și Informatică}\\[0.2cm]
-  {\large Specializarea: Informatică}
+  % Logo UTBv (contine deja numele universitatii si al facultatii)
+  \noindent
+  \includegraphics[width=\textwidth]{figures/logo_ut.pdf}
 
-  \vspace{1.5cm}
-  \includegraphics[width=3cm]{figures/logo_ut.png}
-  \vspace{1.5cm}
+  % Linie albastra subtire sub logo
+  \vspace{0.3cm}
+  {\color{utblue}\hrule height 1.5pt}
+  \vspace{0.4cm}
 
-  {\Huge \textbf{LUCRARE DE LICENȚĂ}}
-
-  \vspace{1cm}
-  \rule{12cm}{0.5pt}\\[0.5cm]
-
-  {\LARGE \textbf{MediLink}}\\[0.4cm]
-  {\Large Platformă Medicală Digitală}\\[0.3cm]
-  \rule{12cm}{0.5pt}
+  % Specializare
+  \begin{center}
+    {\large\color{utdark} Specializarea: \textbf{Informatică}}
+  \end{center}
 
   \vfill
 
-  \begin{minipage}[t]{0.45\textwidth}
+  % Titlu lucrare
+  \begin{center}
+    {\color{utblue}\hrule height 0.8pt}
+    \vspace{0.6cm}
+    {\fontsize{16}{20}\selectfont\bfseries\color{utdark} LUCRARE DE LICENȚĂ}
+    \vspace{0.8cm}
+
+    {\fontsize{28}{34}\selectfont\bfseries\color{utblue} MediLink}
+    \vspace{0.4cm}
+
+    {\fontsize{16}{20}\selectfont\color{utdark} Platformă Medicală Digitală}
+    \vspace{0.6cm}
+    {\color{utblue}\hrule height 0.8pt}
+  \end{center}
+
+  \vfill
+
+  % Coordonator / Absolvent
+  \begin{minipage}[t]{0.48\textwidth}
     \raggedright
-    \textbf{Coordonator științific:}\\[0.3cm]
-    Lect. Dr. Bocu Răzvan
+    {\color{utdark}\textbf{Coordonator științific:}}\\[0.5cm]
+    {\large Lect. Dr. Bocu Răzvan}
   \end{minipage}
   \hfill
-  \begin{minipage}[t]{0.45\textwidth}
+  \begin{minipage}[t]{0.48\textwidth}
     \raggedleft
-    \textbf{Absolvent:}\\[0.3cm]
-    Rădoi Vlad-Rareș
+    {\color{utdark}\textbf{Absolvent:}}\\[0.5cm]
+    {\large Rădoi Vlad-Rareș}
   \end{minipage}
 
-  \vspace{1.5cm}
-  {\large Brașov, 2026}
+  \vspace{1.8cm}
+  \begin{center}
+    {\color{utblue}\hrule height 1pt}
+    \vspace{0.4cm}
+    {\large\color{utdark} Brașov, \textbf{2026}}
+  \end{center}
+
+  \restoregeometry
 \end{titlepage}
 
-% ── Abstract ─────────────────────────────────────────────────
+% -- Abstract -------------------------------------------------
 \chapter*{Rezumat}
 \addcontentsline{toc}{chapter}{Rezumat}
 
@@ -192,22 +233,23 @@ MediLink este o platformă medicală digitală completă, dezvoltată ca lucrare
 
 Platforma oferă funcționalități complete pentru gestionarea fișelor medicale electronice, programărilor online, semnelor vitale cu grafice de evoluție temporală, prescripțiilor medicale, teleconsultațiilor video prin tehnologia WebRTC și mesageriei în timp real prin WebSockets. Un aspect distinctiv al MediLink este integrarea inteligenței artificiale: un asistent de chat medical bazat pe modelul Llama 3.3 70B (prin API-ul Groq), un sistem de predicție a riscului medical per pacient și un generator de rapoarte medicale PDF bazat pe AI.
 
-Din punct de vedere tehnic, MediLink este construit pe o arhitectură modernă client-server, utilizând FastAPI (Python) pentru backend, Angular 19 pentru frontend, PostgreSQL ca bază de date relațională și Redis pentru gestionarea sesiunilor. Securitatea datelor medicale sensibile este asigurată prin criptare Fernet (AES-128-CBC), autentificare JWT cu refresh tokens și opțiune de autentificare în doi factori (2FA/TOTP).
+Din punct de vedere tehnic, MediLink este construit pe o arhitectură modernă client-server, utilizând FastAPI (Python) pentru backend, Angular 19 pentru frontend, PostgreSQL ca bază de date relațională și Redis pentru gestionarea sesiunilor și cache-ului. Securitatea datelor medicale sensibile este asigurată prin criptare Fernet (AES-128-CBC), autentificare JWT cu refresh tokens și opțiune de autentificare în doi factori (2FA/TOTP).
 
-\textbf{Cuvinte cheie:} platformă medicală, FastAPI, Angular, WebRTC, inteligență artificială, GDPR, JWT, WebSockets, teleconsultații, fișe medicale electronice.
+\bigskip
+\noindent\textbf{Cuvinte cheie:} platformă medicală, FastAPI, Angular, WebRTC, inteligență artificială, GDPR, JWT, WebSockets, teleconsultații, fișe medicale electronice.
 
-% ── Table of Contents ────────────────────────────────────────
+% -- Table of Contents ----------------------------------------
 \tableofcontents
 \listoffigures
 \listoftables
 
-% ── Chapters ─────────────────────────────────────────────────
+% -- Chapters -------------------------------------------------
 \input{chapters/01_introducere}
 \input{chapters/02_tehnologii}
 \input{chapters/03_contributii}
 \input{chapters/04_concluzii}
 
-% ── Bibliography ─────────────────────────────────────────────
+% -- Bibliography ---------------------------------------------
 \printbibliography[heading=bibintoc, title={Bibliografie}]
 
 \end{document}
