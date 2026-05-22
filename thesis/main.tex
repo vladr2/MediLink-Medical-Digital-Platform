@@ -6,7 +6,6 @@
 \documentclass[12pt, a4paper, oneside]{report}
 
 % -- Encoding & Language --------------------------------------
-% LuaLaTeX gestioneaza UTF-8 nativ
 \usepackage{fontspec}
 \usepackage[romanian]{babel}
 \usepackage{csquotes}
@@ -25,15 +24,14 @@
 % -- Graphics & Colors ----------------------------------------
 \usepackage{graphicx}
 \usepackage{xcolor}
-% Culori oficiale UTBv
 \definecolor{utblue}{RGB}{0, 84, 166}
-\definecolor{utdark}{RGB}{88, 88, 90}
+\definecolor{utdark}{RGB}{30, 50, 100}
 \definecolor{primary}{RGB}{0, 84, 166}
 \definecolor{codebg}{RGB}{248, 248, 250}
 \definecolor{coderule}{RGB}{210, 210, 210}
 \definecolor{keywordcolor}{RGB}{0, 84, 166}
 \definecolor{stringcolor}{RGB}{180, 60, 0}
-\definecolor{commentcolor}{RGB}{100, 100, 100}
+\definecolor{commentcolor}{RGB}{110, 110, 110}
 
 % -- Code Listings --------------------------------------------
 \usepackage{listings}
@@ -60,8 +58,7 @@
             function, return, if, else, for, while, new, this, extends,
             implements, async, await, public, private, protected, readonly,
             void, string, number, boolean, any, null, undefined, true, false,
-            of, in, constructor, Injectable, Component, OnInit, Input, Output,
-            EventEmitter, HttpClient, Observable, subscribe, pipe, map, tap},
+            of, in, constructor, Injectable, Component, OnInit, Input, Output},
   sensitive=true,
   comment=[l]{//},
   morecomment=[s]{/*}{*/},
@@ -72,13 +69,11 @@
 \lstdefinelanguage{Python3}{
   keywords={def, class, import, from, return, if, else, elif, for, while,
             with, as, try, except, raise, in, not, and, or, True, False, None,
-            async, await, yield, lambda, pass, break, continue, self, super,
-            property, staticmethod, classmethod},
+            async, await, yield, lambda, pass, break, continue, self},
   sensitive=true,
   comment=[l]{\#},
   morestring=[b]",
   morestring=[b]',
-  morestring=[b]{"""},
 }
 
 % -- Tables ---------------------------------------------------
@@ -98,7 +93,7 @@
   urlcolor=utblue,
   citecolor=utblue,
   pdftitle={MediLink -- Platforma Medicala Digitala},
-  pdfauthor={Radoi Vlad-Rares},
+  pdfauthor={Radoi Vlad Cristian},
 ]{hyperref}
 
 % -- Bibliography ---------------------------------------------
@@ -121,24 +116,21 @@
 \usepackage{microtype}
 \usepackage{array}
 \usepackage{footnote}
-\usepackage{tikz}
-\setlength{\headheight}{14pt}
+\setlength{\headheight}{24.02pt}
 
 % -- Header / Footer ------------------------------------------
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\textcolor{utdark}{\leftmark}}
-\fancyhead[R]{\small\textcolor{utblue}{MediLink}}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small MediLink}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\headrule}{\hbox to\headwidth{\color{utblue}\leaders\hrule height \headrulewidth\hfill}}
 
 % -- Chapter / Section Titles ---------------------------------
 \titleformat{\chapter}[block]
-  {\normalfont\Large\bfseries\color{utblue}}
+  {\normalfont\Large\bfseries\color{utdark}}
   {\thechapter.}{0.8em}{}
-  [\vspace{2pt}{\color{utblue}\titlerule[1.5pt]}]
-\titlespacing*{\chapter}{0pt}{20pt}{18pt}
+\titlespacing*{\chapter}{0pt}{20pt}{15pt}
 
 \titleformat{\section}
   {\normalfont\large\bfseries\color{utdark}}
@@ -153,8 +145,6 @@
   {\thesubsubsection}{0.8em}{}
 
 % -- TOC Styling ----------------------------------------------
-\renewcommand{\cftchapfont}{\bfseries\color{utblue}}
-\renewcommand{\cftchappagefont}{\bfseries\color{utblue}}
 \setlength{\cftbeforechapskip}{6pt}
 
 % -- Custom Commands ------------------------------------------
@@ -163,67 +153,54 @@
 
 % ============================================================
 \begin{document}
+\pagenumbering{gobble}
 
 % -- Title Page -----------------------------------------------
 \begin{titlepage}
   \thispagestyle{empty}
-  \newgeometry{top=1.5cm, bottom=2cm, left=2.5cm, right=2.5cm}
 
-  % Logo UTBv (contine deja numele universitatii si al facultatii)
+  % Logo mic sus-stanga
   \noindent
-  \includegraphics[width=\textwidth]{figures/logo_ut.pdf}
+  \includegraphics[width=8.5cm]{figures/logo_ut.pdf}
 
-  % Linie albastra subtire sub logo
-  \vspace{0.3cm}
-  {\color{utblue}\hrule height 1.5pt}
-  \vspace{0.4cm}
+  \vspace*{\fill}
 
-  % Specializare
+  % Titlu principal
   \begin{center}
-    {\large\color{utdark} Specializarea: \textbf{Informatică}}
+    {\fontsize{26}{32}\selectfont\bfseries\color{utdark} LUCRARE DE LICENȚĂ}
+
+    \vspace{1.2cm}
+
+    {\fontsize{18}{24}\selectfont\bfseries\color{utblue}
+      MediLink: Platformă Medicală Digitală}
   \end{center}
 
-  \vfill
+  \vspace*{\fill}
+  \vspace*{\fill}
 
-  % Titlu lucrare
-  \begin{center}
-    {\color{utblue}\hrule height 0.8pt}
-    \vspace{0.6cm}
-    {\fontsize{16}{20}\selectfont\bfseries\color{utdark} LUCRARE DE LICENȚĂ}
-    \vspace{0.8cm}
-
-    {\fontsize{28}{34}\selectfont\bfseries\color{utblue} MediLink}
-    \vspace{0.4cm}
-
-    {\fontsize{16}{20}\selectfont\color{utdark} Platformă Medicală Digitală}
-    \vspace{0.6cm}
-    {\color{utblue}\hrule height 0.8pt}
-  \end{center}
-
-  \vfill
-
-  % Coordonator / Absolvent
-  \begin{minipage}[t]{0.48\textwidth}
+  % Conducator / Absolvent
+  \noindent
+  \begin{minipage}[t]{0.5\textwidth}
     \raggedright
-    {\color{utdark}\textbf{Coordonator științific:}}\\[0.5cm]
-    {\large Lect. Dr. Bocu Răzvan}
-  \end{minipage}
-  \hfill
-  \begin{minipage}[t]{0.48\textwidth}
+    {\small\color{utdark} Conducător științific:}\\[0.4cm]
+    {\normalsize\color{utblue} Lect. Dr. Bocu Răzvan}
+  \end{minipage}%
+  \begin{minipage}[t]{0.5\textwidth}
     \raggedleft
-    {\color{utdark}\textbf{Absolvent:}}\\[0.5cm]
-    {\large Rădoi Vlad-Rareș}
+    {\small\color{utdark} Absolvent:}\\[0.4cm]
+    {\normalsize\color{utblue} Rădoi Vlad Cristian}
   \end{minipage}
 
-  \vspace{1.8cm}
+  \vspace{1.5cm}
+
   \begin{center}
-    {\color{utblue}\hrule height 1pt}
-    \vspace{0.4cm}
-    {\large\color{utdark} Brașov, \textbf{2026}}
+    {\normalsize\bfseries\color{utdark} Brașov, 2026}
   \end{center}
 
-  \restoregeometry
 \end{titlepage}
+
+\pagenumbering{roman}
+\setcounter{page}{1}
 
 % -- Abstract -------------------------------------------------
 \chapter*{Rezumat}
@@ -242,6 +219,9 @@ Din punct de vedere tehnic, MediLink este construit pe o arhitectură modernă c
 \tableofcontents
 \listoffigures
 \listoftables
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
 
 % -- Chapters -------------------------------------------------
 \input{chapters/01_introducere}
