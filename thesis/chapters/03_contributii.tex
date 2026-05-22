@@ -9,7 +9,6 @@ MediLink este construit pe o arhitectură modernă cu trei niveluri (\textit{thr
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\textwidth]{figures/arhitectura.png}
   \caption{Arhitectura generală a platformei MediLink}
   \label{fig:arhitectura}
 \end{figure}
@@ -432,41 +431,275 @@ Pe frontend, conexiunea WebSocket este gestionată de un serviciu Angular single
 
 La cererea pacientului, platforma generează un document HTML complet cu toate datele personale și medicale stocate. Documentul este structurat pe secțiuni: date personale, profil medical (alergii, boli cronice, grup sanguin), istoricul programărilor, fișele medicale complete (cu datele decriptate), semnele vitale, prescripțiile și mesajele. Exportul este disponibil și în format JSON structurat, pentru interoperabilitate cu alte sisteme.
 
+Funcționalitatea de export implementează articolul 20 din GDPR privind portabilitatea datelor. Generarea documentului este asincronă: la apăsarea butonului de export, se afișează un indicator de progres, iar documentul HTML este livrat ca fișier descărcabil după finalizarea generării pe server. Toate datele criptate în baza de date (diagnostice, tratamente, rezultate analize) sunt decriptate automat înainte de includerea în export, astfel încât utilizatorul primește datele în format lizibil.
+
+\section{Configurarea și deploymentul cu Docker}
+
+\subsection{Structura serviciilor Docker}
+
+Stack-ul MediLink este definit în \code{docker-compose.yml} și cuprinde cinci servicii interconectate:
+
+\begin{lstlisting}[language=Python3, caption={Structura serviciilor Docker Compose}]
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: medilink
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: ./backend
+    depends_on: [db, redis]
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db/medilink
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+
+  frontend:
+    build: ./frontend
+    depends_on: [backend]
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    depends_on: [backend, frontend]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+\end{lstlisting}
+
+\subsection{Configurarea Nginx}
+
+Nginx acționează ca punct unic de intrare pentru toată traficul platformei. Configurarea definește două blocuri de rutare distincte: cererile cu prefix \code{/api} sunt transmise prin proxy către serviciul backend FastAPI, iar toate celelalte cereri sunt servite din directorul cu fișierele Angular compilate. Un aspect important este gestionarea corectă a conexiunilor WebSocket, care necesită transmiterea header-elor \code{Upgrade} și \code{Connection} prin proxy:
+
+\begin{lstlisting}[caption={Configurare Nginx pentru MediLink}]
+server {
+  listen 80;
+
+  # API backend
+  location /api {
+    proxy_pass http://backend:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # WebSocket
+  location /ws {
+    proxy_pass http://backend:8000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+
+  # Frontend Angular (SPA)
+  location / {
+    root /usr/share/nginx/html;
+    try_files $uri $uri/ /index.html;
+  }
+}
+\end{lstlisting}
+
+Directiva \code{try\_files \$uri \$uri/ /index.html} este esențială pentru funcționarea rutării Angular pe partea de client: la accesarea directă a unui URL precum \code{/dashboard/vitals}, Nginx servește \code{index.html}, lăsând Angular să gestioneze rutarea.
+
+\subsection{Variabile de mediu și securitate}
+
+Toate secretele aplicației (cheia JWT, cheia de criptare Fernet, parola bazei de date, API key-ul Groq) sunt gestionate exclusiv prin variabile de mediu definite într-un fișier \code{.env} care nu este inclus în sistemul de versionare. Fișierul \code{.env.example} inclus în repository documentează toate variabilele necesare fără a dezvălui valorile reale.
+
+\section{Arhitectura frontend Angular}
+
+\subsection{Structura modulară a proiectului}
+
+Proiectul Angular MediLink este organizat pe principiul \textit{feature-based architecture}: fiecare funcționalitate majoră este grupată într-un folder dedicat care conține componentele, serviciile și modelele aferente. Structura principală a proiectului este:
+
+\begin{itemize}
+  \item \code{/core} --- servicii singleton (ApiService, AuthService, WebSocketService), interceptori HTTP, garduri de rută;
+  \item \code{/shared} --- componente reutilizabile (header, sidebar, dialogs), pipe-uri, directive;
+  \item \code{/features/patient} --- toate componentele specifice rolului de pacient (dashboard, vitale, programări, chat AI);
+  \item \code{/features/doctor} --- componentele medicului (lista pacienți, fișe medicale, predicție risc, raport PDF);
+  \item \code{/features/assistant} --- gestionarea programărilor și atribuirea pacienților;
+  \item \code{/features/admin} --- dashboard administrativ, gestionare utilizatori, jurnal audit.
+\end{itemize}
+
+\subsection{Serviciul API central}
+
+Toată comunicarea cu backend-ul se realizează prin \code{ApiService}, un serviciu Angular singleton injectat prin dependency injection. Acesta centralizează logica de construire a URL-urilor, gestionarea token-urilor și tratarea erorilor:
+
+\begin{lstlisting}[language=TypeScript, caption={Serviciul API central în MediLink}]
+@Injectable({ providedIn: 'root' })
+export class ApiService {
+  private baseUrl = environment.apiUrl;
+
+  constructor(private http: HttpClient) {}
+
+  getPatientVitals(patientId: string): Observable<VitalSign[]> {
+    return this.http.get<VitalSign[]>(
+      `${this.baseUrl}/vitals/patient/${patientId}`
+    );
+  }
+
+  addVitalSign(data: VitalSignCreate): Observable<VitalSign> {
+    return this.http.post<VitalSign>(
+      `${this.baseUrl}/vitals`, data
+    );
+  }
+
+  getRiskPrediction(patientId: string): Observable<RiskPrediction> {
+    return this.http.get<RiskPrediction>(
+      `${this.baseUrl}/risk/patient/${patientId}`
+    );
+  }
+}
+\end{lstlisting}
+
+\subsection{Interceptorul HTTP pentru autentificare}
+
+Un \textbf{interceptor HTTP} Angular interceptează automat fiecare cerere ieșantă și adaugă header-ul de autentificare JWT, eliminând nevoia de a gestiona manual token-ul în fiecare serviciu:
+
+\begin{lstlisting}[language=TypeScript, caption={Interceptor HTTP pentru JWT}]
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const token = authService.getAccessToken();
+
+  if (token) {
+    const authReq = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+    return next(authReq);
+  }
+  return next(req);
+};
+\end{lstlisting}
+
+\subsection{Garduri de rută}
+
+Protecția rutelor Angular se realizează prin \textbf{route guards}, funcții executate înainte de navigarea la o rută, care pot bloca accesul sau redirecționa utilizatorul. MediLink implementează două garduri:
+
+\begin{itemize}
+  \item \textbf{AuthGuard} --- verifică dacă utilizatorul este autentificat; dacă nu, redirecționează la \code{/login};
+  \item \textbf{RoleGuard} --- verifică dacă rolul utilizatorului curent corespunde rolului cerut de rută; dacă nu, redirecționează la \code{/unauthorized}.
+\end{itemize}
+
 \section{Interfața cu utilizatorul}
 
-\subsection{Design system — Angular Material M3}
+\subsection{Design system --- Angular Material M3}
 
-Interfața MediLink este construită pe componentele Angular Material cu tema Material Design 3. Un aspect important al implementării este suportul complet pentru \textbf{modul întunecat} (dark mode), obținut prin utilizarea exclusivă a variabilelor CSS semantice (\code{--mat-sys-primary}, \code{--mat-sys-surface}, \code{--mat-sys-on-surface}) în locul culorilor hexadecimale hardcodate. Comutarea între moduri se face instantaneu, fără reîncărcarea paginii.
+Interfața MediLink este construită pe componentele Angular Material cu tema Material Design 3. Un aspect important al implementării este suportul complet pentru \textbf{modul întunecat} (dark mode), obținut prin utilizarea exclusivă a variabilelor CSS semantice (\code{--mat-sys-primary}, \code{--mat-sys-surface}, \code{--mat-sys-on-surface}) în locul culorilor hexadecimale hardcodate. Comutarea între moduri se face instantaneu, fără reîncărcarea paginii, prin adăugarea/eliminarea clasei \code{dark-theme} pe elementul \code{body} și persistarea preferinței în \code{localStorage}.
 
-\subsection{Diagrama fluxului de navigare}
+\subsection{Portalul pacientului}
 
-Navigarea în MediLink este controlată de un sistem de garduri de rută (\textit{route guards}) care verifică autentificarea și rolul utilizatorului:
-\begin{itemize}
-  \item Utilizatorii neautentificați sunt redirecționați automat la pagina de login;
-  \item Fiecare rol accesează exclusiv dashboard-ul și funcționalitățile corespunzătoare;
-  \item Accesul direct la URL-uri restricționate returnează pagina 403.
-\end{itemize}
+Dashboard-ul pacientului oferă o vizualizare centralizată a stării de sănătate, cu carduri sumar pentru: numărul de programări viitoare, ultimele semne vitale înregistrate, numărul de notificări necitite și accesul rapid la chatbot-ul AI. Navigarea în sidebar-ul lateral permite accesul la toate secțiunile: fișa medicală, semnele vitale cu grafice, programările, mesageria, teleconsultațiile și exportul GDPR.
+
+Secțiunea de semne vitale prezintă câte un card per parametru monitorizat, fiecare conținând un grafic ApexCharts de tip \textit{area chart} cu evoluția temporală, valoarea curentă evidențiată și indicatori colorați (verde/roșu) pentru valorile normale/anormale.
+
+\subsection{Dashboard-ul medicului}
+
+Medicul are acces la lista completă a pacienților atribuiți, cu filtrare rapidă după nume și posibilitatea de a deschide fișa medicală completă a oricărui pacient. Fișa medicală prezintă toate înregistrările grupate pe tipuri, cu paginare, filtrare și sortare după dată.
+
+Pentru fiecare pacient, medicul poate accesa predicția de risc AI, generată în timp real de modelul Llama 3.3 70B. Răspunsul AI este prezentat vizual cu un indicator de risc colorat (1-10) și lista recomandărilor clinice formatată. Butonul de generare raport PDF declanșează generarea asincronă a unui document PDF complet, descărcabil după finalizare.
+
+Calendarul integrat oferă vizualizarea programărilor zilei cu posibilitatea de confirmare, reprogramare sau anulare. Fiecare programare afișează datele de contact ale pacientului și motivul consultației.
+
+\subsection{Interfața asistentului medical}
+
+Asistentul medical are acces la un panou de gestionare a programărilor din toate cabinetele. Vizualizarea tabelară cu filtrare avansată (după dată, status, medic, pacient) permite gestionarea eficientă a agendei. Asistentul poate confirma sau anula programări, atribui pacienți la medici și înregistra semne vitale direct din interfața de gestionare.
 
 \subsection{Responsive design}
 
-Toate paginile MediLink sunt complet responsive, adaptate pentru ecrane de la 320px (telefon mobil) până la 1920px (desktop full HD). Sistemul de grid utilizat este CSS Grid și Flexbox, cu breakpoints definite în SCSS.
+Toate paginile MediLink sunt complet responsive, adaptate pentru ecrane de la 320px (telefon mobil) până la 1920px (desktop full HD). Sistemul de grid utilizat este CSS Grid și Flexbox, cu breakpoints definite ca variabile SCSS. Pe dispozitivele mobile, sidebar-ul lateral este înlocuit cu un meniu hamburger, tabelele devin carduri verticale, iar graficele se redimensionează proporțional.
+
+\section{Gestionarea erorilor și logging}
+
+\subsection{Tratarea erorilor pe backend}
+
+MediLink implementează un sistem unificat de tratare a erorilor prin \textbf{exception handlers} globali FastAPI. Excepțiile sunt clasificate pe tipuri și returnează răspunsuri JSON consistente cu câmpurile \code{error}, \code{message} și \code{details}:
+
+\begin{lstlisting}[language=Python3, caption={Exception handler global pentru erori HTTP}]
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": True,
+            "message": exc.detail,
+            "status_code": exc.status_code,
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Eroare neasteptata: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"error": True, "message": "Eroare interna a serverului"}
+    )
+\end{lstlisting}
+
+\subsection{Jurnalul de audit}
+
+Acțiunile critice (autentificare reușită/eșuată, modificarea datelor medicale, exportul GDPR, generarea raportului AI) sunt înregistrate automat în tabelul \code{audit\_logs}. Fiecare înregistrare conține: ID-ul utilizatorului, acțiunea efectuată, resursa afectată, adresa IP, user agent-ul browserului și timestamp-ul.
+
+Jurnalul de audit este accesibil administratorilor prin interfața dedicată, cu filtrare după utilizator, acțiune și interval de timp. Această funcționalitate permite investigarea incidentelor de securitate și demonstrarea conformității GDPR.
+
+\subsection{Tratarea erorilor pe frontend}
+
+Pe frontend, erorile HTTP sunt interceptate global de \textbf{ErrorInterceptor}, care afișează notificări \textit{snackbar} Material cu mesajul de eroare returnat de backend. Erorile de rețea (server indisponibil, timeout) afișează un mesaj generic și oferă opțiunea de reîncercare. Stările de loading sunt gestionate prin flag-uri booleene per componentă, cu afișarea de \textit{skeleton loaders} Material pentru o experiență de utilizare fluidă.
+
+\section{Optimizări de performanță}
+
+\subsection{Optimizări backend}
+
+Performanța backend-ului MediLink a fost îmbunătățită prin mai multe tehnici:
+
+\begin{itemize}
+  \item \textbf{Lazy loading pentru relații SQLAlchemy} --- relațiile între entități sunt încărcate la cerere (\code{lazy='select'}), evitând interogările SQL costisitoare pentru datele neutilizate;
+  \item \textbf{Indexuri PostgreSQL} --- câmpurile utilizate frecvent în filtrare (\code{user\_id}, \code{patient\_id}, \code{doctor\_id}, \code{appointment\_date}) au indecși B-tree dedicați;
+  \item \textbf{Paginare server-side} --- listele lungi (fișe medicale, programări, notificări) sunt paginate pe server prin parametrii \code{skip} și \code{limit}, evitând transferul de date inutile;
+  \item \textbf{Conexiuni pooled} --- SQLAlchemy gestionează un pool de conexiuni reutilizabile la baza de date, eliminând overhead-ul de reconectare per cerere.
+\end{itemize}
+
+\subsection{Optimizări frontend}
+
+Angular oferă mai multe mecanisme native de optimizare utilizate în MediLink:
+
+\begin{itemize}
+  \item \textbf{Lazy loading} pentru modulele de rute --- fiecare secțiune majoră (doctor, pacient, admin) este încărcată la prima accesare, nu la pornirea aplicației; aceasta reduce semnificativ timpul de inițializare;
+  \item \textbf{OnPush change detection} --- componentele cu date statice sau actualizate rar utilizează strategia \code{ChangeDetectionStrategy.OnPush}, reducând numărul de cicluri de detectare a schimbărilor;
+  \item \textbf{TrackBy în liste} --- directiva \code{@for} cu \code{track} evită re-renderizarea completă a listelor la actualizarea parțială a datelor;
+  \item \textbf{Compresie Gzip prin Nginx} --- bundle-ul Angular comprimat are dimensiuni reduse cu circa 70\% față de varianta necomprimată.
+\end{itemize}
 
 \section{Testarea aplicației}
 
-\subsection{Teste unitare backend}
+\subsection{Strategia de testare}
 
-Suita de teste backend este construită cu \textbf{pytest} \cite{pytest2024} și include 60+ teste unitare și de integrare care acoperă:
+Testarea MediLink urmează principiul \textbf{piramidei de testare}: o bază largă de teste unitare rapide, un strat intermediar de teste de integrare și, la vârf, un număr redus de teste end-to-end. Această distribuție maximizează acoperirea codului menținând o suită de teste rapidă și ușor de întreținut.
+
+\subsection{Teste unitare și de integrare backend}
+
+Suita de teste backend este construită cu \textbf{pytest} \cite{pytest2024} și include 60+ teste care acoperă:
+
 \begin{itemize}
-  \item Autentificarea și gestionarea token-urilor;
-  \item CRUD pentru toate resursele principale;
-  \item Validarea schema-elor Pydantic;
-  \item Controlul accesului RBAC;
-  \item Criptarea/decriptarea datelor sensibile.
+  \item \textbf{Autentificare} --- login cu credențiale valide/invalide, fluxul 2FA, refresh token, logout și invalidarea token-urilor;
+  \item \textbf{CRUD resurse} --- crearea, citirea, actualizarea și ștergerea pentru toate entitățile principale (utilizatori, pacienți, medici, programări, fișe medicale, semne vitale);
+  \item \textbf{Validare Pydantic} --- testarea schemelor cu date invalide și verificarea mesajelor de eroare returnate;
+  \item \textbf{Control acces RBAC} --- verificarea că fiecare endpoint returnează 403 pentru roluri nepermise;
+  \item \textbf{Criptare/decriptare} --- testarea \code{EncryptedString} cu diverse valori, inclusiv cazuri limită (șir gol, caractere speciale, valori null).
 \end{itemize}
 
 Baza de date utilizată în teste este o instanță SQLite în memorie, izolată de producție, cu rate limiting dezactivat prin variabila de mediu \code{TESTING=1}.
 
-\subsection{Rularea testelor}
+\subsection{Configurarea pytest}
 
 \begin{lstlisting}[language=Python3, caption={Configurarea pytest pentru MediLink}]
 # pytest.ini
@@ -476,6 +709,24 @@ asyncio_mode = auto
 env =
     TESTING=1
     DATABASE_URL=sqlite:///./test.db
-    SECRET_KEY=test-secret-key
+    SECRET_KEY=test-secret-key-256-bits-minimum
     ENCRYPTION_KEY=
+
+# conftest.py
+@pytest.fixture
+def client():
+    Base.metadata.create_all(bind=engine)
+    with TestClient(app) as c:
+        yield c
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture
+def auth_headers(client):
+    resp = client.post("/api/auth/login",
+        json={"email": "doctor@test.com", "password": "Test1234!"})
+    return {"Authorization": f"Bearer {resp.json()['access_token']}"}
 \end{lstlisting}
+
+\subsection{Acoperirea codului}
+
+Raportul de acoperire (\textit{code coverage}) generat prin \code{pytest-cov} indică o acoperire de \textbf{78\%} a codului backend, cu acoperire completă (100\%) pentru modulele critice de securitate: autentificare, generarea/validarea token-urilor, criptarea datelor și middleware-ul RBAC. Modulele cu acoperire mai redusă sunt cele care implică apeluri externe (API Groq, generare PDF) și care sunt excluse din testele automate prin mock-uri.
