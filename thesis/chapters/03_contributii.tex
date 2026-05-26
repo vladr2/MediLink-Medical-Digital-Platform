@@ -173,26 +173,12 @@ Autentificarea în MediLink urmează un flux securizat în mai mulți pași, ilu
   \item La expirarea access token-ului, clientul apelează automat \code{/api/auth/refresh} pentru reînnoire, transparent pentru utilizator.
 \end{enumerate}
 
-\begin{lstlisting}[language=Python3, caption={Endpoint de login cu suport 2FA}]
-@router.post("/auth/login")
-async def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email).first()
-    if not user or not verify_password(data.password, user.hashed_password):
-        raise HTTPException(401, "Credențiale invalide")
-
-    if not user.is_active:
-        raise HTTPException(403, "Cont dezactivat")
-
-    # Dacă 2FA este activat, returnează token temporar
-    if user.mfa_secret:
-        temp_token = create_temp_token(user.id)
-        return {"requires_mfa": True, "temp_token": temp_token}
-
-    # Altfel, emite token-urile complete
-    access_token  = create_access_token(user.id, user.role)
-    refresh_token = create_refresh_token(user.id)
-    return {"access_token": access_token, "token_type": "bearer"}
-\end{lstlisting}
+\begin{figure}[H]
+  \centering
+  \screenshot{img_login.png}
+  \caption{Pagina de autentificare MediLink}
+  \label{fig:login}
+\end{figure}
 
 \subsection{Middleware-ul de autentificare}
 
@@ -200,29 +186,7 @@ Verificarea token-ului JWT se realizează printr-un middleware FastAPI (\code{ge
 
 \subsection{Middleware RBAC}
 
-Controlul accesului granular este implementat prin funcții de dependență FastAPI specializate per rol:
-
-\begin{lstlisting}[language=Python3, caption={Middleware RBAC în MediLink}]
-def require_role(*roles: str):
-    def dependency(current_user = Depends(get_current_user)):
-        if current_user.role not in roles:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Acces permis doar pentru: {', '.join(roles)}"
-            )
-        return current_user
-    return dependency
-
-# Utilizare în router
-@router.post("/vitals/patient/{patient_id}")
-async def add_vital(
-    patient_id: str,
-    data: VitalSignCreate,
-    current_user = Depends(require_role("assistant", "doctor")),
-    db: Session = Depends(get_db),
-):
-    ...
-\end{lstlisting}
+Controlul accesului granular este implementat prin funcții de dependență FastAPI specializate per rol. Fiecare endpoint declară explicit ce roluri au permisiunea de acces, iar verificarea se efectuează automat la fiecare cerere, înainte ca logica de business să fie executată. Utilizatorii cu roluri nepotrivite primesc răspunsul HTTP 403 Forbidden, fără ca cererea să ajungă vreodată la logica de prelucrare a datelor.
 
 \section{Modulul de fișe medicale}
 
@@ -244,27 +208,14 @@ Fiecare înregistrare medicală poate fi marcată cu indicatorul \code{has\_anom
 
 \subsection{Paginarea și filtrarea}
 
-Lista de fișe medicale din interfața doctorului implementează \textbf{paginare manuală} pe o grilă de carduri, deoarece soluția standard \code{MatPaginator} din Angular Material funcționează exclusiv cu componenta \code{mat-table}. Soluția adoptată utilizează un \code{MatTableDataSource} pentru filtrare și sortare, combinat cu o proprietate calculată \code{pagedRecords} care aplică segmentarea \textit{slice} pe datele filtrate:
+Lista de fișe medicale din interfața medicului implementează \textbf{paginare manuală} pe o grilă de carduri, combinând un \code{MatTableDataSource} Angular Material pentru filtrare și sortare cu o proprietate calculată care aplică segmentarea pe datele filtrate. Această abordare permite paginarea corectă a grilei de carduri, unde soluția standard \code{MatPaginator} ar funcționa doar cu tabelele \code{mat-table}.
 
-\begin{lstlisting}[language=TypeScript, caption={Paginare manuală pentru grila de carduri}]
-pageSize = 10;
-pageIndex = 0;
-
-get pagedRecords(): MedicalRecord[] {
-  const filtered = this.dataSource.filteredData;
-  const start = this.pageIndex * this.pageSize;
-  return filtered.slice(start, start + this.pageSize);
-}
-
-get totalPages(): number {
-  return Math.ceil(this.dataSource.filteredData.length / this.pageSize);
-}
-
-onFilterChange(value: string): void {
-  this.dataSource.filter = value.trim().toLowerCase();
-  this.pageIndex = 0; // reset la prima pagina la filtrare
-}
-\end{lstlisting}
+\begin{figure}[H]
+  \centering
+  \screenshot{img_fisa_medicala.png}
+  \caption{Fișa medicală electronică a unui pacient}
+  \label{fig:fisa_medicala}
+\end{figure}
 
 \section{Modulul de semne vitale}
 
@@ -289,6 +240,13 @@ Graficele de evoluție temporală sunt implementate cu biblioteca \textbf{ApexCh
   \item Suport complet pentru tema dark/light prin variabile CSS.
 \end{itemize}
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_semne_vitale.png}
+  \caption{Graficele de evoluție a semnelor vitale în MediLink}
+  \label{fig:semne_vitale}
+\end{figure}
+
 \subsection{Alertele automate}
 
 Sistemul detectează automat valorile anormale prin compararea fiecărei măsurători cu intervalele de referință clinice. La detectarea unei anomalii, se generează automat o notificare de tip \code{warning} pentru pacient și medicul curant.
@@ -300,6 +258,13 @@ Sistemul detectează automat valorile anormale prin compararea fiecărei măsur�
 O programare în MediLink trece prin mai multe stări definite ca \textit{enum} PostgreSQL: \code{pending} (creată de pacient, în așteptarea confirmării), \code{confirmed} (confirmată de medic sau asistent), \code{completed} (consultația a avut loc) și \code{cancelled} (anulată de oricare parte).
 
 Tranziția dintre stări este controlată strict pe server: pacienții pot anula programările proprii, dar nu le pot confirma; asistenții și medicii pot confirma sau anula; marcarea ca \code{completed} se face exclusiv de medic sau asistent.
+
+\begin{figure}[H]
+  \centering
+  \screenshot{img_programari.png}
+  \caption{Calendarul de programări și gestionarea lor}
+  \label{fig:programari}
+\end{figure}
 
 \subsection{Remindere automate}
 
@@ -315,102 +280,38 @@ Trimiterea email-ului de reminder este opțională și configurabilă de utiliza
 
 \subsection{Chat medical AI}
 
-Chatbot-ul medical este implementat ca o sesiune de conversație cu memorie, bazată pe modelul Llama 3.3 70B:
+Chatbot-ul medical este implementat ca o sesiune de conversație cu memorie, bazată pe modelul Llama 3.3 70B. La fiecare interogare, backend-ul construiește un prompt de sistem care include profilul medical al pacientului (boli cronice, alergii, medicație), la care se adaugă ultimele 10 schimburi din istoricul conversației. Modelul este instruit să ofere informații medicale generale bazate pe dovezi, să nu formuleze diagnostice definitive și să recomande consultul medical pentru situații urgente. Temperatura de generare redusă (0.3) asigură răspunsuri consistente și factuale.
 
-\begin{lstlisting}[language=Python3, caption={Implementarea chat-ului medical AI}]
-async def generate_medical_response(
-    patient_context: str,
-    conversation_history: list,
-    user_message: str,
-) -> str:
-    system_prompt = f"""Ești un asistent medical AI pentru platforma MediLink.
-Ai acces la profilul medical al pacientului:
-{patient_context}
-
-Reguli:
-- Oferă informații medicale generale bazate pe dovezi
-- Nu pune diagnostice definitive
-- Recomandă consultarea medicului pentru probleme serioase
-- Răspunde în limba română"""
-
-    messages = [{"role": "system", "content": system_prompt}]
-    # Adaugă ultimele 10 mesaje din istoric
-    for msg in conversation_history[-10:]:
-        messages.append({"role": msg["role"], "content": msg["content"]})
-    messages.append({"role": "user", "content": user_message})
-
-    response = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=messages,
-        max_tokens=1024,
-        temperature=0.3,
-    )
-    return response.choices[0].message.content
-\end{lstlisting}
+\begin{figure}[H]
+  \centering
+  \screenshot{img_chat_ai.png}
+  \caption{Chatbot-ul medical AI din perspectiva pacientului}
+  \label{fig:chat_ai}
+\end{figure}
 
 \subsection{Predicția riscului medical}
 
-Predicția riscului este generată pe baza unui context clinic complet, construit din datele pacientului stocate în baza de date:
+Predicția riscului este generată pe baza unui context clinic complet, construit din datele pacientului stocate în baza de date: vârstă, sex, boli cronice, alergii, ultimele 5 înregistrări medicale și ultimele 12 semne vitale. Contextul este transmis modelului Llama 3.3 70B printr-un prompt structurat care solicită un răspuns în format JSON cu câmpurile: \code{risk\_score} (1-10), \code{risk\_level} (scăzut/mediu/ridicat/critic), \code{factors} (lista factorilor de risc identificați) și \code{recommendations} (recomandări clinice specifice).
 
-\begin{lstlisting}[language=Python3, caption={Construirea contextului pentru predicție risc}]
-def build_risk_context(patient, records, vitals) -> str:
-    context = f"Vârsta: {calculate_age(patient)} ani\n"
-    context += f"Gen: {patient.gender}\n"
-    context += f"Boli cronice: {patient.chronic_conditions}\n"
-    context += f"Alergii: {patient.allergies}\n\n"
-
-    context += "Ultimele înregistrări medicale:\n"
-    for r in records[:5]:
-        context += f"- [{r.record_type}] {r.diagnosis or r.notes}\n"
-
-    context += "\nUltimele semne vitale:\n"
-    for v in vitals[:12]:
-        context += f"- {v.vital_type}: {v.value} {v.unit}\n"
-
-    return context
-\end{lstlisting}
-
-Răspunsul AI este structurat ca JSON cu câmpurile: \code{risk\_score} (1-10), \code{risk\_level} (scăzut/mediu/ridicat/critic), \code{factors} (lista factorilor de risc identificați) și \code{recommendations} (recomandări clinice specifice).
+\begin{figure}[H]
+  \centering
+  \screenshot{img_predictie_risc.png}
+  \caption{Predicția riscului medical AI din perspectiva medicului}
+  \label{fig:predictie_risc}
+\end{figure}
 
 \section{Teleconsultații video — WebRTC}
 
 \subsection{Arhitectura semnalizării}
 
-Semnalizarea WebRTC în MediLink utilizează canalul WebSocket existent, cu un protocol de mesaje JSON definit prin tipuri de acțiuni: \code{call-offer}, \code{call-answer}, \code{ice-candidate}, \code{call-end}.
+Semnalizarea WebRTC în MediLink reutilizează canalul WebSocket existent, cu un protocol de mesaje JSON definit prin tipuri de acțiuni: \code{call-offer} (inițierea apelului cu descriptorul SDP), \code{call-answer} (acceptarea apelului), \code{ice-candidate} (candidații de conectivitate ICE) și \code{call-end} (terminarea apelului). Fluxul media audio-video nu trece prin serverul MediLink — odată ce sesiunea WebRTC este negociată, datele sunt transmise direct peer-to-peer între browsere, criptat cu DTLS-SRTP.
 
-\begin{lstlisting}[language=TypeScript, caption={Inițierea unui apel WebRTC în Angular}]
-async initiateCall(targetUserId: string): Promise<void> {
-  this.peerConnection = new RTCPeerConnection({
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-  });
-
-  // Adaugă fluxul local (cameră + microfon)
-  const stream = await navigator.mediaDevices.getUserMedia(
-    { video: true, audio: true }
-  );
-  stream.getTracks().forEach(track =>
-    this.peerConnection!.addTrack(track, stream)
-  );
-
-  // Trimite candidații ICE prin WebSocket
-  this.peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
-      this.ws.send(JSON.stringify({
-        type: 'ice-candidate',
-        to: targetUserId,
-        candidate: event.candidate
-      }));
-    }
-  };
-
-  // Creează și trimite oferta SDP
-  const offer = await this.peerConnection.createOffer();
-  await this.peerConnection.setLocalDescription(offer);
-  this.ws.send(JSON.stringify({
-    type: 'call-offer', to: targetUserId, sdp: offer
-  }));
-}
-\end{lstlisting}
+\begin{figure}[H]
+  \centering
+  \screenshot{img_teleconsultatie.png}
+  \caption{Interfața teleconsultației video WebRTC}
+  \label{fig:teleconsultatie}
+\end{figure}
 
 \section{Mesageria în timp real}
 
@@ -433,84 +334,22 @@ La cererea pacientului, platforma generează un document HTML complet cu toate d
 
 Funcționalitatea de export implementează articolul 20 din GDPR privind portabilitatea datelor. Generarea documentului este asincronă: la apăsarea butonului de export, se afișează un indicator de progres, iar documentul HTML este livrat ca fișier descărcabil după finalizarea generării pe server. Toate datele criptate în baza de date (diagnostice, tratamente, rezultate analize) sunt decriptate automat înainte de includerea în export, astfel încât utilizatorul primește datele în format lizibil.
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_export_gdpr.png}
+  \caption{Funcționalitatea de export GDPR al datelor personale}
+  \label{fig:export_gdpr}
+\end{figure}
+
 \section{Configurarea și deploymentul cu Docker}
 
 \subsection{Structura serviciilor Docker}
 
-Stack-ul MediLink este definit în \code{docker-compose.yml} și cuprinde cinci servicii interconectate:
-
-\begin{lstlisting}[language=Python3, caption={Structura serviciilor Docker Compose}]
-services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: medilink
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-
-  backend:
-    build: ./backend
-    depends_on: [db, redis]
-    environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db/medilink
-      REDIS_URL: redis://redis:6379
-      SECRET_KEY: ${SECRET_KEY}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      GROQ_API_KEY: ${GROQ_API_KEY}
-
-  frontend:
-    build: ./frontend
-    depends_on: [backend]
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    depends_on: [backend, frontend]
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-\end{lstlisting}
+Stack-ul MediLink este definit în \code{docker-compose.yml} și cuprinde cinci servicii interconectate: \code{db} (PostgreSQL 16), \code{redis} (Redis 7), \code{backend} (FastAPI), \code{frontend} (Angular compilat) și \code{nginx} (reverse proxy). Fiecare serviciu are propriul Dockerfile sau imagine oficială, variabilele de mediu injectate din fișierul \code{.env} și volumele necesare pentru persistența datelor.
 
 \subsection{Configurarea Nginx}
 
-Nginx acționează ca punct unic de intrare pentru toată traficul platformei. Configurarea definește două blocuri de rutare distincte: cererile cu prefix \code{/api} sunt transmise prin proxy către serviciul backend FastAPI, iar toate celelalte cereri sunt servite din directorul cu fișierele Angular compilate. Un aspect important este gestionarea corectă a conexiunilor WebSocket, care necesită transmiterea header-elor \code{Upgrade} și \code{Connection} prin proxy:
-
-\begin{lstlisting}[caption={Configurare Nginx pentru MediLink}]
-server {
-  listen 80;
-
-  # API backend
-  location /api {
-    proxy_pass http://backend:8000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-  }
-
-  # WebSocket
-  location /ws {
-    proxy_pass http://backend:8000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-  }
-
-  # Frontend Angular (SPA)
-  location / {
-    root /usr/share/nginx/html;
-    try_files $uri $uri/ /index.html;
-  }
-}
-\end{lstlisting}
-
-Directiva \code{try\_files \$uri \$uri/ /index.html} este esențială pentru funcționarea rutării Angular pe partea de client: la accesarea directă a unui URL precum \code{/dashboard/vitals}, Nginx servește \code{index.html}, lăsând Angular să gestioneze rutarea.
+Nginx acționează ca punct unic de intrare pentru tot traficul platformei, definindu-se trei blocuri de rutare distincte: cererile cu prefix \code{/api} sunt transmise prin proxy către serviciul backend FastAPI cu header-ele de request originale, conexiunile WebSocket (\code{/ws}) sunt gestionate corect prin transmiterea header-elor \code{Upgrade} și \code{Connection}, iar toate celelalte cereri sunt servite din directorul cu fișierele Angular compilate. Directiva \code{try\_files} este esențială pentru rutarea Angular: la accesarea directă a unui URL profund (\code{/dashboard/vitals}), Nginx servește \code{index.html} și lasă Angular Router să gestioneze navigarea pe client.
 
 \subsection{Variabile de mediu și securitate}
 
@@ -533,53 +372,11 @@ Proiectul Angular MediLink este organizat pe principiul \textit{feature-based ar
 
 \subsection{Serviciul API central}
 
-Toată comunicarea cu backend-ul se realizează prin \code{ApiService}, un serviciu Angular singleton injectat prin dependency injection. Acesta centralizează logica de construire a URL-urilor, gestionarea token-urilor și tratarea erorilor:
-
-\begin{lstlisting}[language=TypeScript, caption={Serviciul API central în MediLink}]
-@Injectable({ providedIn: 'root' })
-export class ApiService {
-  private baseUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) {}
-
-  getPatientVitals(patientId: string): Observable<VitalSign[]> {
-    return this.http.get<VitalSign[]>(
-      `${this.baseUrl}/vitals/patient/${patientId}`
-    );
-  }
-
-  addVitalSign(data: VitalSignCreate): Observable<VitalSign> {
-    return this.http.post<VitalSign>(
-      `${this.baseUrl}/vitals`, data
-    );
-  }
-
-  getRiskPrediction(patientId: string): Observable<RiskPrediction> {
-    return this.http.get<RiskPrediction>(
-      `${this.baseUrl}/risk/patient/${patientId}`
-    );
-  }
-}
-\end{lstlisting}
+Toată comunicarea cu backend-ul se realizează prin \code{ApiService}, un serviciu Angular singleton injectat prin dependency injection în toate componentele care au nevoie de date de la server. Acesta centralizează logica de construire a URL-urilor și expune metode tipizate pentru fiecare resursă a API-ului, returnând \code{Observable<T>} pentru fiecare apel. Tipizarea strictă TypeScript garantează că datele primite de la server sunt tratate corect în componentele consumatoare.
 
 \subsection{Interceptorul HTTP pentru autentificare}
 
-Un \textbf{interceptor HTTP} Angular interceptează automat fiecare cerere ieșantă și adaugă header-ul de autentificare JWT, eliminând nevoia de a gestiona manual token-ul în fiecare serviciu:
-
-\begin{lstlisting}[language=TypeScript, caption={Interceptor HTTP pentru JWT}]
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const token = authService.getAccessToken();
-
-  if (token) {
-    const authReq = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
-    });
-    return next(authReq);
-  }
-  return next(req);
-};
-\end{lstlisting}
+Un \textbf{interceptor HTTP} Angular interceptează automat fiecare cerere ieșantă și adaugă header-ul de autentificare JWT (\code{Authorization: Bearer <token>}), eliminând nevoia de a gestiona manual token-ul în fiecare serviciu. Interceptorul este înregistrat o singură dată la nivel de aplicație și se aplică transparent tuturor apelurilor HTTP, inclusiv celor din librăriile terțe care utilizează \code{HttpClient}.
 
 \subsection{Garduri de rută}
 
@@ -602,6 +399,13 @@ Dashboard-ul pacientului oferă o vizualizare centralizată a stării de sănăt
 
 Secțiunea de semne vitale prezintă câte un card per parametru monitorizat, fiecare conținând un grafic ApexCharts de tip \textit{area chart} cu evoluția temporală, valoarea curentă evidențiată și indicatori colorați (verde/roșu) pentru valorile normale/anormale.
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_dashboard_pacient.png}
+  \caption{Dashboard-ul pacientului cu statistici de sănătate}
+  \label{fig:dashboard_pacient}
+\end{figure}
+
 \subsection{Dashboard-ul medicului}
 
 Medicul are acces la lista completă a pacienților atribuiți, cu filtrare rapidă după nume și posibilitatea de a deschide fișa medicală completă a oricărui pacient. Fișa medicală prezintă toate înregistrările grupate pe tipuri, cu paginare, filtrare și sortare după dată.
@@ -610,9 +414,23 @@ Pentru fiecare pacient, medicul poate accesa predicția de risc AI, generată î
 
 Calendarul integrat oferă vizualizarea programărilor zilei cu posibilitatea de confirmare, reprogramare sau anulare. Fiecare programare afișează datele de contact ale pacientului și motivul consultației.
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_dashboard_doctor.png}
+  \caption{Dashboard-ul medicului cu lista de pacienți și programările zilei}
+  \label{fig:dashboard_doctor}
+\end{figure}
+
 \subsection{Interfața asistentului medical}
 
 Asistentul medical are acces la un panou de gestionare a programărilor din toate cabinetele. Vizualizarea tabelară cu filtrare avansată (după dată, status, medic, pacient) permite gestionarea eficientă a agendei. Asistentul poate confirma sau anula programări, atribui pacienți la medici și înregistra semne vitale direct din interfața de gestionare.
+
+\begin{figure}[H]
+  \centering
+  \screenshot{img_dashboard_asistent.png}
+  \caption{Interfața asistentului medical — gestionarea programărilor}
+  \label{fig:dashboard_asistent}
+\end{figure}
 
 \subsection{Responsive design}
 
@@ -622,28 +440,7 @@ Toate paginile MediLink sunt complet responsive, adaptate pentru ecrane de la 32
 
 \subsection{Tratarea erorilor pe backend}
 
-MediLink implementează un sistem unificat de tratare a erorilor prin \textbf{exception handlers} globali FastAPI. Excepțiile sunt clasificate pe tipuri și returnează răspunsuri JSON consistente cu câmpurile \code{error}, \code{message} și \code{details}:
-
-\begin{lstlisting}[language=Python3, caption={Exception handler global pentru erori HTTP}]
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": True,
-            "message": exc.detail,
-            "status_code": exc.status_code,
-        }
-    )
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Eroare neasteptata: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"error": True, "message": "Eroare interna a serverului"}
-    )
-\end{lstlisting}
+MediLink implementează un sistem unificat de tratare a erorilor prin \textbf{exception handlers} globali FastAPI înregistrați la nivel de aplicație. Excepțiile sunt clasificate pe tipuri (HTTPException pentru erorile de business, Exception generală pentru erorile neașteptate) și returnează răspunsuri JSON consistente cu câmpurile \code{error}, \code{message} și \code{status\_code}. Erorile interne (500) sunt înregistrate în log cu stack trace complet, dar răspunsul către client nu expune detalii tehnice sensibile.
 
 \subsection{Jurnalul de audit}
 
@@ -701,31 +498,7 @@ Baza de date utilizată în teste este o instanță SQLite în memorie, izolată
 
 \subsection{Configurarea pytest}
 
-\begin{lstlisting}[language=Python3, caption={Configurarea pytest pentru MediLink}]
-# pytest.ini
-[pytest]
-testpaths = tests
-asyncio_mode = auto
-env =
-    TESTING=1
-    DATABASE_URL=sqlite:///./test.db
-    SECRET_KEY=test-secret-key-256-bits-minimum
-    ENCRYPTION_KEY=
-
-# conftest.py
-@pytest.fixture
-def client():
-    Base.metadata.create_all(bind=engine)
-    with TestClient(app) as c:
-        yield c
-    Base.metadata.drop_all(bind=engine)
-
-@pytest.fixture
-def auth_headers(client):
-    resp = client.post("/api/auth/login",
-        json={"email": "doctor@test.com", "password": "Test1234!"})
-    return {"Authorization": f"Bearer {resp.json()['access_token']}"}
-\end{lstlisting}
+Suita de teste este configurată prin fișierul \code{pytest.ini}, care specifică directorul de teste, modul asincron automat pentru funcțiile \code{async} și variabilele de mediu specifice testării. Baza de date utilizată este SQLite în memorie, izolată complet de baza de date de producție. Fiecare test primește un client HTTP proaspăt și o bază de date curată prin intermediul fixture-urilor pytest, garantând izolarea completă între teste. Rate limiting-ul este dezactivat în mediul de test prin variabila de mediu \code{TESTING=1}.
 
 \subsection{Acoperirea codului}
 
@@ -751,6 +524,13 @@ MediLink generează notificări automate pentru mai multe evenimente de sistem:
   \item \textbf{Valoare vitală anormală} --- alertă generată automat la înregistrarea unui semn vital în afara intervalului de referință (ex: tensiune arterială sistolică > 140 mmHg);
   \item \textbf{Raport PDF generat} --- notificare că raportul medical solicitat este gata de descărcare.
 \end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \screenshot{img_notificari.png}
+  \caption{Panoul de notificări în timp real}
+  \label{fig:notificari}
+\end{figure}
 
 \subsection{Persistența notificărilor}
 
@@ -780,6 +560,13 @@ Această arhitectură hibridă (REST pentru persistență + WebSocket pentru liv
 
 Interfața de mesagerie afișează indicatori vizuali pentru: mesajele necitite (bold + badge numeric), ora trimiterii fiecărui mesaj (formatată relativ: „acum 5 minute", „ieri la 14:30") și starea de online/offline a interlocutorului, determinată pe baza prezenței conexiunii WebSocket active.
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_mesagerie.png}
+  \caption{Modulul de mesagerie în timp real}
+  \label{fig:mesagerie}
+\end{figure}
+
 \section{Fluxul de onboarding al utilizatorilor noi}
 
 \subsection{Pagina de onboarding}
@@ -793,6 +580,13 @@ Pagina de onboarding este adaptată în funcție de rol:
   \item \textbf{Medici} --- completează: specializarea medicală, titlul academic, numărul de telefon al cabinetului, programul de consultații și o scurtă biografie profesională;
   \item \textbf{Asistenți medicali} --- completează informațiile de contact și departamentul.
 \end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \screenshot{img_onboarding.png}
+  \caption{Formularul de onboarding pentru utilizatori noi}
+  \label{fig:onboarding}
+\end{figure}
 
 \subsection{Validarea și salvarea datelor}
 
@@ -813,6 +607,13 @@ Raportul medical PDF este una dintre funcționalitățile distinctive ale MediLi
   \item \textbf{WeasyPrint} \cite{weasyprint2024} convertește documentul HTML+CSS în format PDF, cu antet și subsol pe fiecare pagină, numerotare pagini și stilizare profesională;
   \item PDF-ul generat este returnat clientului ca fișier descărcabil cu header-ul \code{Content-Disposition: attachment}.
 \end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \screenshot{img_raport_pdf.png}
+  \caption{Raportul medical PDF generat de AI}
+  \label{fig:raport_pdf}
+\end{figure}
 
 \subsection{Structura raportului generat}
 
@@ -841,6 +642,13 @@ Graficele incluse sunt:
   \item \textbf{Statusul programărilor} --- grafic donut cu proporția programărilor în fiecare status (pending/confirmed/completed/cancelled).
 \end{itemize}
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_dashboard_admin.png}
+  \caption{Dashboard-ul administrativ cu statistici și grafice}
+  \label{fig:dashboard_admin}
+\end{figure}
+
 \subsection{Gestionarea utilizatorilor}
 
 Tabelul de utilizatori din dashboard-ul admin oferă administratorului vizibilitate completă asupra tuturor conturilor din platformă. Funcționalitățile disponibile includ:
@@ -851,6 +659,13 @@ Tabelul de utilizatori din dashboard-ul admin oferă administratorului vizibilit
   \item \textbf{Adăugare utilizator manual} --- administratorul poate crea conturi noi fără ca utilizatorul să parcurgă fluxul de înregistrare, util pentru onboarding rapid al personalului medical;
   \item \textbf{Vizualizarea jurnalului de audit} --- acțiunile recente ale unui utilizator specific pot fi filtrate direct din profilul acestuia.
 \end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \screenshot{img_admin_utilizatori.png}
+  \caption{Gestiunea utilizatorilor din panoul de administrare}
+  \label{fig:admin_utilizatori}
+\end{figure}
 
 \subsection{Jurnalul de audit}
 

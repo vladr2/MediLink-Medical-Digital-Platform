@@ -160,6 +160,20 @@
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\api}[1]{\texttt{\color{utblue}#1}}
 
+% -- Screenshot placeholder -----------------------------------
+% Daca fisierul exista → afiseaza imaginea
+% Daca nu exista → afiseaza un chenar gri cu numele fisierului
+\newcommand{\screenshot}[2][0.95\textwidth]{%
+  \IfFileExists{figures/#2}{%
+    \includegraphics[width=#1]{figures/#2}%
+  }{%
+    \setlength{\fboxsep}{0pt}%
+    \fbox{\begin{minipage}[c][5.5cm][c]{#1}%
+      \centering\color{gray}\small\textit{[Adăugați captura de ecran: figures/#2]}%
+    \end{minipage}}%
+  }%
+}
+
 % ============================================================
 \begin{document}
 \pagenumbering{gobble}

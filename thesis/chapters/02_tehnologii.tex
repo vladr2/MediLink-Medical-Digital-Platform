@@ -61,61 +61,22 @@ Când o funcție asincronă FastAPI execută o operație de I/O (interogare baz�
 
 \textbf{Pydantic} \cite{pydantic2024} este biblioteca de validare a datelor integrată în FastAPI. Schema datelor se definește o singură dată ca modele Python cu tipuri adnotate, iar FastAPI generează automat logica de validare, serializare și documentare OpenAPI:
 
-\begin{lstlisting}[language=Python3, caption={Modele Pydantic pentru gestionarea utilizatorilor}]
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
-from datetime import date
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    first_name: str
-    last_name: str
-    role: str
-
-    @field_validator('password')
-    @classmethod
-    def password_strength(cls, v):
-        if len(v) < 8:
-            raise ValueError('Parola trebuie sa aiba minim 8 caractere')
-        return v
-
-class UserResponse(BaseModel):
-    id: str
-    email: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    role: str
-    is_active: bool
-
-    model_config = {"from_attributes": True}
-\end{lstlisting}
-
-Orice cerere HTTP cu date invalide (email incorect, câmp lipsă, tip greșit) primește automat un răspuns HTTP 422 cu detalii precise despre câmpurile eronate, fără nicio linie de cod adițional.
+De exemplu, un model de utilizator definit cu Pydantic validează automat formatul adresei de email, impune o lungime minimă pentru parolă și respinge câmpurile lipsă — toate fără cod adițional de validare. Orice cerere HTTP cu date invalide primește automat un răspuns HTTP 422 cu detalii precise despre câmpurile eronate.
 
 \subsection{Documentație automată OpenAPI}
 
 FastAPI generează automat documentație interactivă bazată pe specificația \textbf{OpenAPI 3.0}: o interfață Swagger UI accesibilă la \code{/api/docs} și o documentație ReDoc la \code{/api/redoc}. Aceasta permite testarea completă a API-ului direct din browser, vizualizarea schemelor de request/response și exportul specificației în format JSON pentru integrări cu alte instrumente.
 
+\begin{figure}[H]
+  \centering
+  \screenshot{img_swagger.png}
+  \caption{Documentația automată Swagger UI a API-ului MediLink}
+  \label{fig:swagger}
+\end{figure}
+
 \subsection{Dependency Injection}
 
-Sistemul de \textbf{dependency injection} al FastAPI permite declararea și injectarea automată a resurselor comune (sesiunea bazei de date, utilizatorul autentificat, permisiunile RBAC) în funcțiile handler, eliminând codul duplicat:
-
-\begin{lstlisting}[language=Python3, caption={Dependency Injection pentru autentificare și baza de date}]
-from fastapi import Depends, HTTPException
-from app.middleware.auth import get_current_user
-from app.core.database import get_db
-
-@router.get("/medical-records/patient/{patient_id}")
-async def get_patient_records(
-    patient_id: str,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    if current_user.role not in ["doctor", "admin", "assistant"]:
-        raise HTTPException(403, "Acces interzis")
-    # logica de business
-\end{lstlisting}
+Sistemul de \textbf{dependency injection} al FastAPI permite declararea și injectarea automată a resurselor comune (sesiunea bazei de date, utilizatorul autentificat, permisiunile RBAC) în funcțiile handler. Dependențele sunt definite o singură dată și reutilizate automat în toate endpoint-urile, eliminând codul duplicat și asigurând o gestionare coerentă a autentificării și a accesului la baza de date.
 
 \section{TypeScript și Angular 19 --- Framework-ul frontend}
 
@@ -132,28 +93,7 @@ Principalele avantaje ale TypeScript în contextul MediLink:
   \item \textbf{Scalabilitate} --- într-o bază de cod mare (MediLink frontend are 80+ componente și servicii), tipizarea previne categorii întregi de bug-uri de integrare.
 \end{itemize}
 
-\begin{lstlisting}[language=TypeScript, caption={Interfete TypeScript pentru modelele de date MediLink}]
-export interface Patient {
-  id: string;
-  userId: string;
-  bloodGroup?: string;
-  allergies?: string;
-  chronicConditions?: string;
-  emergencyContact?: string;
-  user?: User;
-}
-
-export interface VitalSign {
-  id: string;
-  patientId: string;
-  vitalType: 'blood_pressure_systolic' | 'blood_pressure_diastolic'
-           | 'heart_rate' | 'temperature' | 'spo2' | 'weight';
-  value: number;
-  unit: string;
-  measuredAt: string;
-  isAbnormal: boolean;
-}
-\end{lstlisting}
+De exemplu, interfețele TypeScript definite pentru modelele \code{Patient} și \code{VitalSign} specifică exact câmpurile disponibile, tipurile lor și dacă sunt obligatorii sau opționale — documentând implicit structura datelor primite de la API și prevenind erori de integrare la compilare.
 
 \subsection{Angular 19 --- Prezentare generală}
 
@@ -165,40 +105,7 @@ MediLink utilizează \textbf{Angular 19}, care aduce îmbunătățiri semnificat
 
 Arhitectura MediLink adoptă în întregime paradigma \textbf{componentelor standalone}, stabilizată în Angular 17. Fiecare componentă declară explicit dependențele sale, eliminând necesitatea modulelor NgModule și simplificând structura aplicației:
 
-\begin{lstlisting}[language=TypeScript, caption={Componenta standalone pentru semne vitale}]
-@Component({
-  selector: 'app-vitals',
-  standalone: true,
-  imports: [
-    CommonModule, MatCardModule, MatButtonModule,
-    NgApexchartsModule, TablerIconsModule,
-  ],
-  templateUrl: './vitals.component.html',
-  styleUrl: './vitals.component.scss',
-})
-export class VitalsComponent implements OnInit {
-  vitals: VitalSign[] = [];
-  isLoading = false;
-
-  constructor(
-    private api: ApiService,
-    private auth: AuthService,
-    private snackBar: MatSnackBar
-  ) {}
-
-  ngOnInit(): void {
-    this.loadVitals();
-  }
-
-  loadVitals(): void {
-    this.isLoading = true;
-    this.api.getVitals().subscribe({
-      next: (data) => { this.vitals = data; this.isLoading = false; },
-      error: () => { this.isLoading = false; }
-    });
-  }
-}
-\end{lstlisting}
+Față de arhitectura clasică cu module NgModule, componentele standalone simplifică semnificativ structura proiectului: fiecare componentă este un modul auto-conținut care declară explicit dependențele sale (componente Material, pipe-uri, servicii), fără a necesita înregistrarea într-un modul părinte. MediLink utilizează exclusiv componente standalone, consistentă cu recomandările oficiale Angular 17+.
 
 \subsection{Programare reactivă cu RxJS}
 
@@ -240,33 +147,7 @@ Relațiile many-to-many (medic-pacient, utilizator-rol) sunt implementate prin t
 
 \subsection{SQLAlchemy ORM}
 
-\textbf{SQLAlchemy} \cite{sqlalchemy2024} este cel mai utilizat ORM (\textit{Object-Relational Mapper}) pentru Python, oferind o abstractizare completă a bazei de date prin maparea tabelelor SQL la clase Python. MediLink utilizează SQLAlchemy 2.0 cu stilul declarativ modern:
-
-\begin{lstlisting}[language=Python3, caption={Model SQLAlchemy pentru entitatea User}]
-class User(Base):
-    __tablename__ = "users"
-
-    id             = Column(UUID(as_uuid=True), primary_key=True,
-                            default=uuid.uuid4)
-    email          = Column(String, unique=True, nullable=False, index=True)
-    first_name     = Column(String, nullable=True)
-    last_name      = Column(String, nullable=True)
-    hashed_password= Column(String, nullable=True)
-    role           = Column(Enum(UserRole), nullable=False)
-    phone          = Column(String, nullable=True)
-    birth_date     = Column(String, nullable=True)
-    mfa_secret     = Column(String, nullable=True)
-    is_active      = Column(Boolean, default=True)
-    created_at     = Column(DateTime(timezone=True),
-                            server_default=func.now())
-
-    # Relatii
-    doctor_profile  = relationship("Doctor", back_populates="user",
-                                   uselist=False)
-    patient_profile = relationship("Patient", back_populates="user",
-                                   uselist=False)
-    notifications   = relationship("Notification", back_populates="user")
-\end{lstlisting}
+\textbf{SQLAlchemy} \cite{sqlalchemy2024} este cel mai utilizat ORM (\textit{Object-Relational Mapper}) pentru Python, oferind o abstractizare completă a bazei de date prin maparea tabelelor SQL la clase Python. MediLink utilizează SQLAlchemy 2.0 cu stilul declarativ modern, în care fiecare tabel este reprezentat printr-o clasă Python cu atribute ce corespund coloanelor. Relațiile dintre tabele (one-to-many, many-to-many) sunt declarate explicit prin directive \code{relationship}, permițând navigarea obiectelor direct în Python fără a scrie interogări SQL manuale.
 
 \subsection{Alembic --- Migrații ale schemei}
 
