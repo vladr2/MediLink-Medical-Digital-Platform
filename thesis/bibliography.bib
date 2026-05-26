@@ -2,6 +2,8 @@
 %  Bibliografie — MediLink
 % ============================================================
 
+% ---------- Strategii si reglementari ----------
+
 @misc{who2023digital,
   author       = {{World Health Organization}},
   title        = {Global Strategy on Digital Health 2020--2025},
@@ -19,12 +21,31 @@
 }
 
 @misc{ms_romania_2023,
-  author       = {{Ministerul Sanatatii}},
-  title        = {Strategia nationala de sanatate 2023--2030},
+  author       = {{Ministerul Sanatatii al Romaniei}},
+  title        = {Strategia Nationala de Sanatate 2023--2030},
   year         = {2023},
-  howpublished = {\url{https://www.ms.ro/ro/strategie-nationala-de-sanatate/}},
+  howpublished = {\url{https://www.ms.ro}},
+  note         = {Document oficial al Ministerului Sanatatii. Accesat: mai 2026}
+}
+
+@misc{gdpr2016,
+  author       = {{Parlamentul European si Consiliul Uniunii Europene}},
+  title        = {Regulamentul (UE) 2016/679 privind protectia persoanelor fizice
+                  in ceea ce priveste prelucrarea datelor cu caracter personal (GDPR)},
+  year         = {2016},
+  howpublished = {\url{https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32016R0679}},
+  note         = {Publicat in Jurnalul Oficial al UE L 119, 4 mai 2016}
+}
+
+@misc{ehds2022,
+  author       = {{European Commission}},
+  title        = {European Health Data Space --- Regulation Proposal COM/2022/197},
+  year         = {2022},
+  howpublished = {\url{https://health.ec.europa.eu/system/files/2022-05/com_2022_197_en.pdf}},
   note         = {Accesat: mai 2026}
 }
+
+% ---------- Articole stiintifice ----------
 
 @article{singhal2023large,
   author    = {Singhal, Karan and Azizi, Shekoofeh and Tu, Tao and others},
@@ -35,6 +56,102 @@
   year      = {2023},
   doi       = {10.1038/s41586-023-06291-2}
 }
+
+@article{sandhu1996rbac,
+  author    = {Sandhu, Ravi S. and Coyne, Edward J. and Feinstein, Hal L. and Youman, Charles E.},
+  title     = {Role-Based Access Control Models},
+  journal   = {IEEE Computer},
+  volume    = {29},
+  number    = {2},
+  pages     = {38--47},
+  year      = {1996},
+  doi       = {10.1109/2.485845}
+}
+
+@inproceedings{vaswani2017attention,
+  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob
+               and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
+  title     = {Attention Is All You Need},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {30},
+  year      = {2017},
+  note      = {Disponibil la: \url{https://arxiv.org/abs/1706.03762}}
+}
+
+% ---------- Carti de specialitate ----------
+
+@book{kleppmann2017data,
+  author    = {Kleppmann, Martin},
+  title     = {Designing Data-Intensive Applications: The Big Ideas Behind Reliable,
+               Scalable, and Maintainable Systems},
+  publisher = {O'Reilly Media},
+  year      = {2017},
+  isbn      = {978-1-4920-3289-1}
+}
+
+@book{martin2017clean,
+  author    = {Martin, Robert C.},
+  title     = {Clean Architecture: A Craftsman's Guide to Software Structure and Design},
+  publisher = {Prentice Hall},
+  year      = {2017},
+  isbn      = {978-0-13-468599-1}
+}
+
+@book{newman2021microservices,
+  author    = {Newman, Sam},
+  title     = {Building Microservices: Designing Fine-Grained Systems},
+  edition   = {2},
+  publisher = {O'Reilly Media},
+  year      = {2021},
+  isbn      = {978-1-4920-3402-4}
+}
+
+% ---------- Teze de doctorat ----------
+
+@phdthesis{fielding2000rest,
+  author = {Fielding, Roy Thomas},
+  title  = {Architectural Styles and the Design of Network-based Software Architectures},
+  school = {University of California, Irvine},
+  year   = {2000},
+  note   = {Disponibil la: \url{https://ics.uci.edu/~fielding/pubs/dissertation/top.htm}}
+}
+
+% ---------- Standarde si RFC-uri ----------
+
+@techreport{rfc7519,
+  author      = {Jones, Michael and Bradley, John and Sakimura, Nat},
+  title       = {JSON Web Token ({JWT})},
+  institution = {IETF},
+  type        = {RFC},
+  number      = {7519},
+  year        = {2015},
+  doi         = {10.17487/RFC7519},
+  note        = {\url{https://datatracker.ietf.org/doc/html/rfc7519}}
+}
+
+@techreport{rfc6238,
+  author      = {M'Raihi, David and Machani, Salah and Pei, Mingliang and Rydell, Johan},
+  title       = {TOTP: Time-Based One-Time Password Algorithm},
+  institution = {IETF},
+  type        = {RFC},
+  number      = {6238},
+  year        = {2011},
+  doi         = {10.17487/RFC6238},
+  note        = {\url{https://datatracker.ietf.org/doc/html/rfc6238}}
+}
+
+@techreport{rfc6455,
+  author      = {Fette, Ian and Melnikov, Alexey},
+  title       = {The WebSocket Protocol},
+  institution = {IETF},
+  type        = {RFC},
+  number      = {6455},
+  year        = {2011},
+  doi         = {10.17487/RFC6455},
+  note        = {\url{https://datatracker.ietf.org/doc/html/rfc6455}}
+}
+
+% ---------- Platforme medicale ----------
 
 @misc{epic2024,
   author       = {{Epic Systems}},
@@ -62,26 +179,28 @@
 
 @misc{hipocrate2024,
   author       = {{Hipocrate Software}},
-  title        = {Hipocrate --- Software medical pentru cabinete},
+  title        = {Hipocrate --- Software medical integrat pentru cabinete si clinici},
   year         = {2024},
-  howpublished = {\url{https://hipocrate.ro}},
+  howpublished = {\url{https://hipocrate.info}},
   note         = {Accesat: mai 2026}
 }
 
 @misc{medicalsoft2024,
   author       = {{MedicalSoft}},
-  title        = {MedicalSoft --- Solutii software pentru sanatate},
+  title        = {MedicalSoft --- Solutii software pentru managementul activitatii medicale},
   year         = {2024},
-  howpublished = {\url{https://www.medicalsoft.ro}},
+  note         = {Solutie software comerciala pentru cabinete medicale, Romania}
+}
+
+@misc{fhir2024,
+  author       = {{HL7 International}},
+  title        = {HL7 FHIR R4 --- Fast Healthcare Interoperability Resources},
+  year         = {2024},
+  howpublished = {\url{https://www.hl7.org/fhir/}},
   note         = {Accesat: mai 2026}
 }
 
-@phdthesis{fielding2000rest,
-  author = {Fielding, Roy Thomas},
-  title  = {Architectural Styles and the Design of Network-based Software Architectures},
-  school = {University of California, Irvine},
-  year   = {2000}
-}
+% ---------- Tehnologii backend ----------
 
 @misc{fastapi2024,
   author       = {Ramirez, Sebastian},
@@ -99,27 +218,19 @@
   note         = {Accesat: mai 2026}
 }
 
-@misc{angular2024,
-  author       = {{Google LLC}},
-  title        = {Angular --- The web development framework for building the future},
+@misc{python_asyncio2024,
+  author       = {{Python Software Foundation}},
+  title        = {asyncio --- Asynchronous I/O (Python 3.12 Documentation)},
   year         = {2024},
-  howpublished = {\url{https://angular.dev}},
+  howpublished = {\url{https://docs.python.org/3/library/asyncio.html}},
   note         = {Accesat: mai 2026}
 }
 
-@misc{angularmaterial2024,
-  author       = {{Google LLC}},
-  title        = {Angular Material --- UI component infrastructure and Material Design components},
+@misc{pydantic2024,
+  author       = {Colvin, Samuel and others},
+  title        = {Pydantic --- Data validation using Python type annotations},
   year         = {2024},
-  howpublished = {\url{https://material.angular.io}},
-  note         = {Accesat: mai 2026}
-}
-
-@misc{postgresql2024,
-  author       = {{The PostgreSQL Global Development Group}},
-  title        = {PostgreSQL 16 Documentation},
-  year         = {2024},
-  howpublished = {\url{https://www.postgresql.org/docs/16/}},
+  howpublished = {\url{https://docs.pydantic.dev}},
   note         = {Accesat: mai 2026}
 }
 
@@ -147,26 +258,6 @@
   note         = {Accesat: mai 2026}
 }
 
-@techreport{rfc7519,
-  author      = {Jones, Michael and Bradley, John and Sakimura, Nat},
-  title       = {JSON Web Token ({JWT})},
-  institution = {IETF},
-  type        = {RFC},
-  number      = {7519},
-  year        = {2015},
-  doi         = {10.17487/RFC7519}
-}
-
-@techreport{rfc6238,
-  author      = {M'Raihi, David and Machani, Salah and Pei, Mingliang and Rydell, Johan},
-  title       = {TOTP: Time-Based One-Time Password Algorithm},
-  institution = {IETF},
-  type        = {RFC},
-  number      = {6238},
-  year        = {2011},
-  doi         = {10.17487/RFC6238}
-}
-
 @misc{cryptography2024,
   author       = {{pyca/cryptography contributors}},
   title        = {cryptography --- Cryptographic recipes and primitives for Python},
@@ -175,82 +266,19 @@
   note         = {Accesat: mai 2026}
 }
 
-@article{sandhu1996rbac,
-  author    = {Sandhu, Ravi S. and Coyne, Edward J. and Feinstein, Hal L. and Youman, Charles E.},
-  title     = {Role-Based Access Control Models},
-  journal   = {IEEE Computer},
-  volume    = {29},
-  number    = {2},
-  pages     = {38--47},
-  year      = {1996},
-  doi       = {10.1109/2.485845}
-}
-
-@inproceedings{vaswani2017attention,
-  author    = {Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob
-               and Jones, Llion and Gomez, Aidan N. and Kaiser, Lukasz and Polosukhin, Illia},
-  title     = {Attention Is All You Need},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {30},
-  year      = {2017}
-}
-
-@misc{meta2024llama,
-  author       = {{Meta AI}},
-  title        = {Llama 3: Open Foundation and Fine-Tuned Chat Models},
+@misc{weasyprint2024,
+  author       = {{Kozea}},
+  title        = {WeasyPrint --- The Awesome Document Factory},
   year         = {2024},
-  howpublished = {\url{https://ai.meta.com/llama/}},
+  howpublished = {\url{https://weasyprint.org}},
   note         = {Accesat: mai 2026}
 }
 
-@misc{groq2024,
-  author       = {{Groq, Inc.}},
-  title        = {Groq API --- Fast AI Inference},
+@misc{apscheduler2024,
+  author       = {Jaaksi, Alex},
+  title        = {APScheduler --- Advanced Python Scheduler},
   year         = {2024},
-  howpublished = {\url{https://console.groq.com}},
-  note         = {Accesat: mai 2026}
-}
-
-@techreport{rfc6455,
-  author      = {Fette, Ian and Melnikov, Alexey},
-  title       = {The WebSocket Protocol},
-  institution = {IETF},
-  type        = {RFC},
-  number      = {6455},
-  year        = {2011},
-  doi         = {10.17487/RFC6455}
-}
-
-@misc{webrtc2024,
-  author       = {{W3C and IETF}},
-  title        = {WebRTC 1.0: Real-Time Communication Between Browsers},
-  year         = {2024},
-  howpublished = {\url{https://www.w3.org/TR/webrtc/}},
-  note         = {Accesat: mai 2026}
-}
-
-@misc{docker2024,
-  author       = {{Docker, Inc.}},
-  title        = {Docker --- Accelerated Container Application Development},
-  year         = {2024},
-  howpublished = {\url{https://www.docker.com}},
-  note         = {Accesat: mai 2026}
-}
-
-@misc{gdpr2016,
-  author       = {{Parlamentul European si Consiliul Uniunii Europene}},
-  title        = {Regulamentul (UE) 2016/679 privind protectia persoanelor fizice
-                  in ceea ce priveste prelucrarea datelor cu caracter personal},
-  year         = {2016},
-  howpublished = {\url{https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32016R0679}},
-  note         = {Publicat in Jurnalul Oficial al UE L 119, 4 mai 2016}
-}
-
-@misc{apexcharts2024,
-  author       = {{ApexCharts}},
-  title        = {ApexCharts --- Modern \& Interactive Open-source Charts},
-  year         = {2024},
-  howpublished = {\url{https://apexcharts.com}},
+  howpublished = {\url{https://apscheduler.readthedocs.io/en/stable/}},
   note         = {Accesat: mai 2026}
 }
 
@@ -262,43 +290,21 @@
   note         = {Accesat: mai 2026}
 }
 
-@misc{fhir2024,
-  author       = {{HL7 International}},
-  title        = {HL7 FHIR R4 --- Fast Healthcare Interoperability Resources},
-  year         = {2024},
-  howpublished = {\url{https://www.hl7.org/fhir/}},
-  note         = {Accesat: mai 2026}
-}
+% ---------- Tehnologii frontend ----------
 
-@misc{flutter2024,
+@misc{angular2024,
   author       = {{Google LLC}},
-  title        = {Flutter --- Build apps for any screen},
+  title        = {Angular --- The web development framework for building the future},
   year         = {2024},
-  howpublished = {\url{https://flutter.dev}},
+  howpublished = {\url{https://angular.dev}},
   note         = {Accesat: mai 2026}
 }
 
-@misc{ehds2022,
-  author       = {{European Commission}},
-  title        = {European Health Data Space --- Regulation Proposal COM/2022/197},
-  year         = {2022},
-  howpublished = {\url{https://health.ec.europa.eu/system/files/2022-05/com_2022_197_en.pdf}},
-  note         = {Accesat: mai 2026}
-}
-
-@misc{nginx2024,
-  author       = {{F5, Inc.}},
-  title        = {NGINX --- High Performance Load Balancer, Web Server and Reverse Proxy},
+@misc{angularmaterial2024,
+  author       = {{Google LLC}},
+  title        = {Angular Material --- UI component infrastructure and Material Design components},
   year         = {2024},
-  howpublished = {\url{https://nginx.org/en/docs/}},
-  note         = {Accesat: mai 2026}
-}
-
-@misc{owasp2021,
-  author       = {{OWASP Foundation}},
-  title        = {OWASP Top Ten 2021 --- The Ten Most Critical Web Application Security Risks},
-  year         = {2021},
-  howpublished = {\url{https://owasp.org/Top10/}},
+  howpublished = {\url{https://material.angular.io}},
   note         = {Accesat: mai 2026}
 }
 
@@ -318,34 +324,82 @@
   note         = {Accesat: mai 2026}
 }
 
-@misc{python_asyncio2024,
-  author       = {{Python Software Foundation}},
-  title        = {asyncio --- Asynchronous I/O (Python 3.12 Documentation)},
+@misc{apexcharts2024,
+  author       = {{ApexCharts}},
+  title        = {ApexCharts --- Modern \& Interactive Open-source Charts},
   year         = {2024},
-  howpublished = {\url{https://docs.python.org/3/library/asyncio.html}},
+  howpublished = {\url{https://apexcharts.com}},
   note         = {Accesat: mai 2026}
 }
 
-@misc{pydantic2024,
-  author       = {Colvin, Samuel and others},
-  title        = {Pydantic --- Data validation using Python type annotations},
+@misc{flutter2024,
+  author       = {{Google LLC}},
+  title        = {Flutter --- Build apps for any screen},
   year         = {2024},
-  howpublished = {\url{https://docs.pydantic.dev}},
+  howpublished = {\url{https://flutter.dev}},
   note         = {Accesat: mai 2026}
 }
 
-@misc{weasyprint2024,
-  author       = {{Kozea}},
-  title        = {WeasyPrint --- The Awesome Document Factory},
+% ---------- Baze de date ----------
+
+@misc{postgresql2024,
+  author       = {{The PostgreSQL Global Development Group}},
+  title        = {PostgreSQL 16 Documentation},
   year         = {2024},
-  howpublished = {\url{https://weasyprint.org}},
+  howpublished = {\url{https://www.postgresql.org/docs/16/}},
   note         = {Accesat: mai 2026}
 }
 
-@misc{apscheduler2024,
-  author       = {Jaaksi, Alex},
-  title        = {APScheduler --- Advanced Python Scheduler},
+% ---------- Inteligenta artificiala ----------
+
+@misc{meta2024llama,
+  author       = {{Meta AI}},
+  title        = {Llama 3: Open Foundation and Fine-Tuned Chat Models},
   year         = {2024},
-  howpublished = {\url{https://apscheduler.readthedocs.io}},
+  howpublished = {\url{https://ai.meta.com/llama/}},
+  note         = {Accesat: mai 2026}
+}
+
+@misc{groq2024,
+  author       = {{Groq, Inc.}},
+  title        = {Groq API --- Fast AI Inference},
+  year         = {2024},
+  howpublished = {\url{https://console.groq.com}},
+  note         = {Accesat: mai 2026}
+}
+
+% ---------- Infrastructura ----------
+
+@misc{docker2024,
+  author       = {{Docker, Inc.}},
+  title        = {Docker --- Accelerated Container Application Development},
+  year         = {2024},
+  howpublished = {\url{https://www.docker.com}},
+  note         = {Accesat: mai 2026}
+}
+
+@misc{nginx2024,
+  author       = {{F5, Inc.}},
+  title        = {NGINX --- High Performance Load Balancer, Web Server and Reverse Proxy},
+  year         = {2024},
+  howpublished = {\url{https://nginx.org/en/docs/}},
+  note         = {Accesat: mai 2026}
+}
+
+% ---------- Securitate ----------
+
+@misc{owasp2021,
+  author       = {{OWASP Foundation}},
+  title        = {OWASP Top Ten 2021 --- The Ten Most Critical Web Application Security Risks},
+  year         = {2021},
+  howpublished = {\url{https://owasp.org/Top10/2021/}},
+  note         = {Accesat: mai 2026}
+}
+
+@misc{webrtc2024,
+  author       = {{W3C and IETF}},
+  title        = {WebRTC 1.0: Real-Time Communication Between Browsers},
+  year         = {2024},
+  howpublished = {\url{https://www.w3.org/TR/webrtc/}},
   note         = {Accesat: mai 2026}
 }

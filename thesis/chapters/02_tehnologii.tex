@@ -39,7 +39,7 @@ Aplicațiile web enterprise moderne adoptă o \textbf{arhitectură pe trei nivel
   \item \textbf{Nivelul de date} (\textit{Data Tier}) --- baza de date PostgreSQL și cache-ul Redis, responsabile de persistența și recuperarea eficientă a datelor.
 \end{enumerate}
 
-Această separare permite scalabilitate independentă pe fiecare nivel, înlocuirea unui nivel fără impact asupra celorlalte și o testabilitate mai bună a componentelor.
+Această separare permite scalabilitate independentă pe fiecare nivel, înlocuirea unui nivel fără impact asupra celorlalte și o testabilitate mai bună a componentelor. Principiile unei arhitecturi curate și a separării responsabilităților sunt tratate în detaliu de Robert C. Martin în lucrarea sa de referință \cite{martin2017clean}.
 
 \section{FastAPI --- Framework-ul backend}
 
@@ -228,7 +228,7 @@ MediLink utilizează PostgreSQL 16 și beneficiază de mai multe caracteristici 
   \item \textbf{UUID nativ} --- tipul \code{uuid} este utilizat ca cheie primară pentru toate entitățile, generată prin funcția \code{gen\_random\_uuid()};
   \item \textbf{JSONB} --- tipul binar JSON permite stocarea datelor semi-structurate (lista medicamentelor dintr-o prescripție, mesajele unui chat) cu indexare și interogare eficientă;
   \item \textbf{Tipuri ENUM} --- valorile predefinite (roluri utilizator, statusuri programare) sunt stocate ca tipuri enumerate PostgreSQL, garantând integritatea la nivel de bază de date;
-  \item \textbf{Tranzacții ACID} --- atomicitate, consistență, izolare și durabilitate garantate pentru operațiile complexe multi-tabel;
+  \item \textbf{Tranzacții ACID} --- atomicitate, consistență, izolare și durabilitate garantate pentru operațiile complexe multi-tabel \cite{kleppmann2017data};
   \item \textbf{Indexuri parțiale} --- indexuri create doar pentru subseturi de date (ex: programările viitoare), reducând dimensiunea indexului și îmbunătățind performanța.
 \end{itemize}
 
@@ -395,6 +395,8 @@ Containerizarea aduce beneficii practice concrete pentru MediLink:
   \item \textbf{Izolare} --- fiecare serviciu rulează în propriul container cu propriul sistem de fișiere, prevenind conflictele între dependențe;
   \item \textbf{Deployment simplificat} --- întreaga platformă MediLink pornește cu o singură comandă: \code{docker compose up --build}.
 \end{itemize}
+
+Arhitectura bazată pe servicii independente containerizate urmează principiile microserviciilor descrise de Sam Newman \cite{newman2021microservices}: fiecare serviciu are o singură responsabilitate, poate fi scalat și actualizat independent, iar comunicarea se realizează exclusiv prin interfețe bine definite (REST, WebSocket).
 
 \section{Nginx --- Proxy invers și server web}
 
