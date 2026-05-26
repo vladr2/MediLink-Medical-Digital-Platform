@@ -3,10 +3,24 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MAT_DATE_FORMATS, MAT_DATE_LOCALE, DateAdapter } from '@angular/material/core';
+import { MomentDateAdapter, MAT_MOMENT_DATE_ADAPTER_OPTIONS } from '@angular/material-moment-adapter';
+import moment from 'moment';
 import { ApiService } from '../../services/api';
 import { AuthService, User } from '../../services/auth';
 import { NotificationService } from '../../services/notification';
 import { SkeletonComponent } from '../../components/skeleton/skeleton.component';
+
+const MY_DATE_FORMATS = {
+  parse: { dateInput: 'DD/MM/YYYY' },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'DD/MM/YYYY',
+    monthYearA11yLabel: 'MMMM YYYY',
+  }
+};
 
 // Validator custom: CNP = exact 13 cifre
 function cnpValidator(control: AbstractControl) {
@@ -47,8 +61,13 @@ interface DoctorProfile {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule, ReactiveFormsModule, SkeletonComponent],
+  imports: [CommonModule, FormsModule, MaterialModule, TablerIconsModule, ReactiveFormsModule, SkeletonComponent, MatDatepickerModule],
   templateUrl: './profile.html',
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'ro-RO' },
+    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE, MAT_MOMENT_DATE_ADAPTER_OPTIONS] },
+    { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
+  ],
 })
 export class ProfileComponent implements OnInit {
   currentUser: User | null = null;
@@ -97,7 +116,7 @@ export class ProfileComponent implements OnInit {
       first_name: [''],
       last_name: [''],
       phone: ['', phoneValidator],
-      birth_date: [''],
+      birth_date_moment: [null],
       address: [''],
     });
 
@@ -147,8 +166,10 @@ export class ProfileComponent implements OnInit {
           first_name: user.first_name || '',
           last_name: user.last_name || '',
           phone: user.phone || '',
-          birth_date: user.birth_date || '',
           address: user.address || '',
+          birth_date_moment: user.birth_date
+            ? moment(user.birth_date, ['DD/MM/YYYY', 'YYYY-MM-DD'])
+            : null,
         });
         if (user.role === 'patient' && !this.patientProfile) {
           this.loadPatientProfile();
@@ -205,7 +226,17 @@ export class ProfileComponent implements OnInit {
       return;
     }
     this.saving = true;
-    this.apiService.put<any>('/me', this.userForm.value).subscribe({
+    const raw = this.userForm.value;
+    const payload: any = {
+      first_name: raw.first_name,
+      last_name: raw.last_name,
+      phone: raw.phone,
+      address: raw.address,
+    };
+    if (raw.birth_date_moment && moment.isMoment(raw.birth_date_moment)) {
+      payload.birth_date = raw.birth_date_moment.format('DD/MM/YYYY');
+    }
+    this.apiService.put<any>('/me', payload).subscribe({
       next: () => {
         this.authService.loadCurrentUser();
         this.saving = false;

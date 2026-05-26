@@ -300,6 +300,9 @@ def revoke_all_other_sessions(
 @router.post("/register", response_model=UserResponse)
 @limiter.limit("5/minute")
 def register(request: Request, data: UserCreate, db: Session = Depends(get_db)):
+    from app.models.patient import Patient
+    from app.models.doctor import Doctor
+
     existing = db.query(User).filter(User.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -308,8 +311,23 @@ def register(request: Request, data: UserCreate, db: Session = Depends(get_db)):
         email=data.email,
         hashed_password=hash_password(data.password),
         role=data.role,
+        first_name=data.first_name,
+        last_name=data.last_name,
     )
     db.add(user)
+    db.flush()  # obține user.id fără commit
+
+    # Creează profilul corespunzător rolului
+    if data.role == "patient":
+        db.add(Patient(user_id=user.id))
+    elif data.role == "doctor":
+        db.add(Doctor(
+            user_id=user.id,
+            specialization=data.specialization or "Nespecificat",
+            license_number=data.license_number or "N/A",
+            department=data.department or "",
+        ))
+
     db.commit()
     db.refresh(user)
     return user

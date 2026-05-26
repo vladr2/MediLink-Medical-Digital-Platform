@@ -58,7 +58,11 @@
 
             <mat-form-field appearance="outline" style="width:100%; margin-top:4px;">
               <mat-label>Data nașterii</mat-label>
-              <input matInput type="date" formControlName="birth_date">
+              <input matInput [matDatepicker]="pickerBirth" formControlName="birth_date_moment"
+                     placeholder="ZZ/LL/AAAA" readonly>
+              <mat-datepicker-toggle matIconSuffix [for]="pickerBirth"></mat-datepicker-toggle>
+              <mat-datepicker #pickerBirth startView="multi-year"
+                              [startAt]="null"></mat-datepicker>
               <mat-icon matPrefix>cake</mat-icon>
             </mat-form-field>
 
@@ -112,7 +116,6 @@
                   <mat-option value="">— Neselectat —</mat-option>
                   <mat-option value="M">Masculin</mat-option>
                   <mat-option value="F">Feminin</mat-option>
-                  <mat-option value="Altul">Altul</mat-option>
                 </mat-select>
                 <mat-icon matPrefix>gender-bigender</mat-icon>
               </mat-form-field>

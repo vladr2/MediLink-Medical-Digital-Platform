@@ -39,7 +39,10 @@
 
           <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Data nașterii</mat-label>
           <mat-form-field appearance="outline" class="w-100">
-            <input matInput formControlName="birth_date" placeholder="DD.MM.YYYY" />
+            <input matInput [matDatepicker]="pickerBirth" formControlName="birth_date_moment"
+                   placeholder="ZZ/LL/AAAA" readonly>
+            <mat-datepicker-toggle matIconSuffix [for]="pickerBirth"></mat-datepicker-toggle>
+            <mat-datepicker #pickerBirth startView="multi-year"></mat-datepicker>
           </mat-form-field>
 
           <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Adresă</mat-label>
