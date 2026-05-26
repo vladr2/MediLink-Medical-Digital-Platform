@@ -244,14 +244,20 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width: 160px;">
-          <mat-label>De la data</mat-label>
-          <input matInput type="date" (change)="filterByDate('from', $event)" />
+        <mat-form-field appearance="outline" style="min-width:145px;" subscriptSizing="dynamic">
+          <mat-label>De la</mat-label>
+          <input matInput [matDatepicker]="pickerFrom" [(ngModel)]="dateFromMoment"
+                 (dateChange)="onFilterDateFrom($event)" placeholder="ZZ/LL/AAAA" readonly>
+          <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFrom></mat-datepicker>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" style="width: 160px;">
-          <mat-label>Până la data</mat-label>
-          <input matInput type="date" (change)="filterByDate('to', $event)" />
+        <mat-form-field appearance="outline" style="min-width:145px;" subscriptSizing="dynamic">
+          <mat-label>Până la</mat-label>
+          <input matInput [matDatepicker]="pickerTo" [(ngModel)]="dateToMoment"
+                 (dateChange)="onFilterDateTo($event)" placeholder="ZZ/LL/AAAA" readonly>
+          <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTo></mat-datepicker>
         </mat-form-field>
       </div>
 

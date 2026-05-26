@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder } from '@angular/forms';
 import { MaterialModule } from '../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { ApiService } from '../../services/api';
@@ -50,7 +50,7 @@ export type BarChartOptions = {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, MaterialModule, TablerIconsModule, ReactiveFormsModule, MatDialogModule, MatSortModule, MatPaginatorModule, NgApexchartsModule, SkeletonComponent],
+  imports: [CommonModule, MaterialModule, TablerIconsModule, ReactiveFormsModule, FormsModule, MatDialogModule, MatSortModule, MatPaginatorModule, NgApexchartsModule, SkeletonComponent],
   templateUrl: './admin-dashboard.html',
 })
 export class AdminDashboardComponent implements OnInit, AfterViewInit {
@@ -74,6 +74,8 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
   doctors: any[] = [];
   dateFrom = '';
   dateTo = '';
+  dateFromMoment: any = null;
+  dateToMoment: any = null;
 
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -162,6 +164,16 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit {
   filterByDate(type: string, event: any): void {
     if (type === 'from') this.dateFrom = event.target.value;
     if (type === 'to') this.dateTo = event.target.value;
+    this.applyFilters();
+  }
+
+  onFilterDateFrom(e: any): void {
+    this.dateFrom = e.value ? e.value.format('YYYY-MM-DD') : '';
+    this.applyFilters();
+  }
+
+  onFilterDateTo(e: any): void {
+    this.dateTo = e.value ? e.value.format('YYYY-MM-DD') : '';
     this.applyFilters();
   }
 
