@@ -112,4 +112,14 @@ export class AuthService {
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
   }
+
+  register(data: {
+    email: string;
+    password: string;
+    role: string;
+    first_name?: string;
+    last_name?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/auth/register`, data);
+  }
 }

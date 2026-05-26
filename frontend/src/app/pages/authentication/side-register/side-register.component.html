@@ -1,60 +1,133 @@
 <div class="blank-layout-container justify-content-center align-items-center bg-light">
   <div class="position-relative row w-100 h-100 bg-gredient justify-content-center">
-    <div class="col-lg-4 d-flex align-items-center">
-      <mat-card class="cardWithShadow boxed-auth">
+    <div class="col-lg-5 d-flex align-items-center">
+      <mat-card class="cardWithShadow boxed-auth w-100">
         <mat-card-content class="p-32">
-          <div class="text-center">
+
+          <!-- Logo -->
+          <div class="text-center m-b-24">
             <a [routerLink]="['/dashboard']">
-              <img src="./assets/images/logos/logo.svg" class="align-middle m-2" alt="logo" />
+              <img src="./assets/images/logos/logo.svg" class="align-middle m-2" alt="logo" width="120" />
             </a>
+            <h4 class="mat-subtitle-1 f-w-600 m-t-8 m-b-0">Creează cont nou</h4>
+            <p class="mat-body-1 text-muted m-b-0">Completează datele de mai jos pentru a te înregistra</p>
           </div>
 
-          <div class="row m-t-24 custom-row">
-            <div class="col-6">
-              <button mat-stroked-button class="w-100">
-                <div class="d-flex align-items-center">
-                  <img src="/assets/images/svgs/google-icon.svg" alt="google" width="16" class="m-r-8" />
-                  <span class="d-none d-lg-block">Sign in with Google</span>
-                </div>
-              </button>
+          <!-- Success message -->
+          @if (successMessage) {
+            <mat-card class="m-b-16" style="background:#e8f5e9; border-left:4px solid #4caf50;">
+              <mat-card-content class="p-12 d-flex align-items-center gap-8">
+                <i-tabler name="circle-check" class="text-success" style="width:20px;height:20px;"></i-tabler>
+                <span class="mat-body-2">{{ successMessage }}</span>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          <!-- Error message -->
+          @if (errorMessage) {
+            <mat-card class="m-b-16" style="background:#ffebee; border-left:4px solid #f44336;">
+              <mat-card-content class="p-12 d-flex align-items-center gap-8">
+                <i-tabler name="alert-circle" class="text-error" style="width:20px;height:20px;"></i-tabler>
+                <span class="mat-body-2">{{ errorMessage }}</span>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()">
+
+            <!-- Nume + Prenume -->
+            <div class="row">
+              <div class="col-6">
+                <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Prenume</mat-label>
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <input matInput formControlName="first_name" placeholder="Ion" />
+                  @if (f['first_name'].touched && f['first_name'].hasError('required')) {
+                    <mat-error>Câmp obligatoriu</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+              <div class="col-6">
+                <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block">Nume</mat-label>
+                <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+                  <input matInput formControlName="last_name" placeholder="Popescu" />
+                  @if (f['last_name'].touched && f['last_name'].hasError('required')) {
+                    <mat-error>Câmp obligatoriu</mat-error>
+                  }
+                </mat-form-field>
+              </div>
             </div>
-            <div class="col-6">
-              <button mat-stroked-button class="w-100 d-flex align-items-center">
-                <div class="d-flex align-items-center">
-                  <img src="/assets/images/svgs/facebook-icon.svg" alt="facebook" width="40" class="m-r-4" />
-                  <span class="d-none d-lg-block">Sign in with FB</span>
-                </div>
+
+            <!-- Email -->
+            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block m-t-12">Adresă email</mat-label>
+            <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+              <input matInput type="email" formControlName="email" placeholder="exemplu@email.com" />
+              @if (f['email'].touched && f['email'].hasError('required')) {
+                <mat-error>Adresa de email este obligatorie</mat-error>
+              }
+              @if (f['email'].touched && f['email'].hasError('email')) {
+                <mat-error>Adresă de email invalidă</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Parolă -->
+            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block m-t-12">Parolă</mat-label>
+            <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+              <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="Minim 8 caractere" />
+              <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+                <i-tabler [name]="hidePassword ? 'eye' : 'eye-off'" style="width:18px;height:18px;"></i-tabler>
               </button>
-            </div>
-          </div>
-
-          <div class="or-border m-t-30">or sign up with</div>
-
-          <form class="m-t-30">
-            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Name</mat-label>
-            <mat-form-field appearance="outline" class="w-100" color="primary">
-              <input matInput />
-            </mat-form-field>
-            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Email Adddress</mat-label>
-            <mat-form-field appearance="outline" class="w-100" color="primary">
-              <input matInput type="email" />
-            </mat-form-field>
-            <!-- password -->
-            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block">Password</mat-label>
-            <mat-form-field appearance="outline" class="w-100" color="primary">
-              <input matInput type="password" />
             </mat-form-field>
 
-            <a [routerLink]="['/']" mat-flat-button color="primary" class="w-100">
-              Sign Up
-            </a>
-            <!-- input -->
+            <!-- Cerinte parola -->
+            @if (f['password'].dirty && f['password'].value) {
+              <div class="m-t-4 m-b-8">
+                <div class="d-flex align-items-center gap-6 m-b-2"
+                     [style.color]="f['password'].value!.length >= 8 ? '#4caf50' : '#f44336'">
+                  <i-tabler [name]="f['password'].value!.length >= 8 ? 'circle-check' : 'circle-x'" style="width:14px;height:14px;"></i-tabler>
+                  <span class="f-s-12">Minim 8 caractere</span>
+                </div>
+                <div class="d-flex align-items-center gap-6 m-b-2"
+                     [style.color]="/[A-Z]/.test(f['password'].value!) ? '#4caf50' : '#f44336'">
+                  <i-tabler [name]="/[A-Z]/.test(f['password'].value!) ? 'circle-check' : 'circle-x'" style="width:14px;height:14px;"></i-tabler>
+                  <span class="f-s-12">Cel puțin o literă mare (ex: A, B, C)</span>
+                </div>
+                <div class="d-flex align-items-center gap-6"
+                     [style.color]="/\d/.test(f['password'].value!) ? '#4caf50' : '#f44336'">
+                  <i-tabler [name]="/\d/.test(f['password'].value!) ? 'circle-check' : 'circle-x'" style="width:14px;height:14px;"></i-tabler>
+                  <span class="f-s-12">Cel puțin o cifră (ex: 1, 2, 3)</span>
+                </div>
+              </div>
+            }
+
+            <!-- Rol -->
+            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-8 d-block m-t-12">Tip cont</mat-label>
+            <mat-form-field appearance="outline" class="w-100" subscriptSizing="dynamic">
+              <mat-select formControlName="role">
+                <mat-option value="patient">Pacient</mat-option>
+                <mat-option value="doctor">Medic</mat-option>
+                <mat-option value="assistant">Asistent medical</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Buton submit -->
+            <button mat-flat-button color="primary" class="w-100 m-t-20" type="submit" [disabled]="loading">
+              @if (loading) {
+                <mat-spinner diameter="20" style="display:inline-block; margin-right:8px;"></mat-spinner>
+                Se creează contul...
+              } @else {
+                Creează cont
+              }
+            </button>
+
           </form>
-          <span class="d-block f-w-500 text-center m-t-24">Already have an Account?
 
-            <a [routerLink]="['/authentication/login']" class="text-decoration-none text-primary f-w-500 f-s-14">
-              Sign In</a>
+          <span class="d-block f-w-500 text-center m-t-24">
+            Ai deja un cont?
+            <a [routerLink]="['/authentication/login']" class="text-decoration-none text-primary f-w-600">
+              Autentifică-te
+            </a>
           </span>
+
         </mat-card-content>
       </mat-card>
     </div>
