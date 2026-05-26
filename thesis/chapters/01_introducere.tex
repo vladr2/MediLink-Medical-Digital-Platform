@@ -11,7 +11,19 @@ Transformarea digitală a sistemului de sănătate reprezintă una dintre cele m
 
 MediLink se naște din nevoia concretă de a adresa aceste probleme printr-o soluție modernă, completă și accesibilă, care să poată fi adoptată rapid de unitățile medicale de dimensiuni mici și medii — cabinete medicale, policlinici și centre medicale private — fără a necesita investiții infrastructurale majore, grație arhitecturii bazate pe containere Docker.
 
-Alegerea acestei teme este motivată și de evoluția rapidă a inteligenței artificiale aplicate în medicină. Modelele lingvistice mari (\textit{Large Language Models} — LLM) au demonstrat în studii recente capacitatea de a asista clinicienii în formularea diagnosticelor diferențiale \cite{singhal2023large}, de a interpreta rezultate de laborator și de a genera recomandări terapeutice bazate pe dovezi. Integrarea acestor capabilități într-o platformă medicală accesibilă reprezintă un pas concret spre medicina personalizată și asistată de AI.
+Alegerea acestei teme este motivată și de evoluția rapidă a inteligenței artificiale aplicate în medicină. Modelele lingvistice mari (\textit{Large Language Models} --- LLM) au demonstrat în studii recente capacitatea de a asista clinicienii în formularea diagnosticelor diferențiale \cite{singhal2023large}, de a interpreta rezultate de laborator și de a genera recomandări terapeutice bazate pe dovezi. Integrarea acestor capabilități într-o platformă medicală accesibilă reprezintă un pas concret spre medicina personalizată și asistată de AI.
+
+\subsection{Provocările specifice sistemului de sănătate din România}
+
+Contextul românesc prezintă câteva caracteristici specifice care amplifică necesitatea unei soluții digitale integrate:
+
+\textbf{Fragmentarea datelor medicale.} În absența unui dosar medical electronic național funcțional, istoricul medical al unui pacient este răspândit între medicul de familie, mai mulți specialiști și unitățile spitalicești, fiecare cu propriile sisteme (sau fișe pe hârtie). Medicul curant nu are acces la investigațiile efectuate la alt cabinet, prescripțiile anterioare sau reacțiile adverse documentate, creând riscuri clinice reale.
+
+\textbf{Supraaglomerarea sistemului.} Timpii de așteptare în unitățile medicale publice sunt printre cei mai mari din UE. O platformă digitală cu programări online, teleconsultații și mesagerie asincronă poate redistribui o parte din consultațiile de rutină (monitorizarea bolilor cronice, reînnoirea prescripțiilor, întrebări de follow-up) din format fizic în format digital, degrevând sistemul.
+
+\textbf{Migrația personalului medical.} România se confruntă cu o emigrare semnificativă a personalului medical calificat. Instrumentele digitale moderne reprezintă un factor de retenție, îmbunătățind condițiile de lucru prin reducerea birocrației și automatizarea sarcinilor administrative repetitive.
+
+\textbf{Costul infrastructurii.} Soluțiile enterprise existente (Epic, Cerner) sunt inaccesibile financiar pentru cabinetele medicale mici, care reprezintă majoritate furnizorilor de servicii medicale primare din România. O soluție open-source, containerizată, care rulează pe un server modest, adresează direct această barieră de adopție.
 
 \section{Studiu comparativ cu aplicațiile existente}
 

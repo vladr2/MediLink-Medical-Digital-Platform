@@ -730,3 +730,130 @@ def auth_headers(client):
 \subsection{Acoperirea codului}
 
 Raportul de acoperire (\textit{code coverage}) generat prin \code{pytest-cov} indică o acoperire de \textbf{78\%} a codului backend, cu acoperire completă (100\%) pentru modulele critice de securitate: autentificare, generarea/validarea token-urilor, criptarea datelor și middleware-ul RBAC. Modulele cu acoperire mai redusă sunt cele care implică apeluri externe (API Groq, generare PDF) și care sunt excluse din testele automate prin mock-uri.
+
+\section{Sistemul de notificări în timp real}
+
+\subsection{Arhitectura notificărilor}
+
+Sistemul de notificări al MediLink este construit în jurul unei conexiuni WebSocket persistente, menținute pe întreaga durată a sesiunii utilizatorului. La conectare, serverul înregistrează conexiunea în dicționarul \code{active\_connections}, indexat după ID-ul utilizatorului, permițând trimiterea de mesaje direcționate oricând pe parcursul sesiunii.
+
+Notificările sunt structurate ca obiecte JSON cu câmpurile: \code{type} (tipul notificării), \code{title}, \code{message}, \code{link} (URL opțional pentru navigare directă) și \code{timestamp}. Pe frontend, serviciul \code{WebSocketService} distribuie mesajele primite prin intermediul unui \code{Subject} RxJS, la care se abonează componentele interesate.
+
+\subsection{Tipurile de notificări generate}
+
+MediLink generează notificări automate pentru mai multe evenimente de sistem:
+
+\begin{itemize}
+  \item \textbf{Confirmare programare} --- pacientul primește o notificare instantanee când asistentul sau medicul îi confirmă programarea, cu data și ora confirmată;
+  \item \textbf{Anulare programare} --- notificare cu motivul anulării, dacă este furnizat;
+  \item \textbf{Reminder programare} --- notificări automate la 24 de ore și 1 oră înainte de programare, generate de scheduler-ul APScheduler \cite{apscheduler2024};
+  \item \textbf{Mesaj nou} --- notificare la primirea unui mesaj nou în conversație, cu previzualizarea primelor 50 de caractere;
+  \item \textbf{Valoare vitală anormală} --- alertă generată automat la înregistrarea unui semn vital în afara intervalului de referință (ex: tensiune arterială sistolică > 140 mmHg);
+  \item \textbf{Raport PDF generat} --- notificare că raportul medical solicitat este gata de descărcare.
+\end{itemize}
+
+\subsection{Persistența notificărilor}
+
+Notificările sunt stocate în tabelul \code{notifications} din PostgreSQL, permițând recuperarea lor la reconectare. La prima încărcare a paginii, componenta de header interoghează endpoint-ul \code{/api/notifications} și afișează numărul de notificări necitite ca badge numeric. Marcarea ca citite se realizează fie individual (click pe o notificare), fie în bloc prin butonul „Marchează toate ca citite".
+
+Notificările mai vechi de 30 de zile sunt șterse automat printr-un task APScheduler care rulează zilnic, prevenind acumularea datelor nefolositoare.
+
+\section{Modulul de mesagerie în timp real}
+
+\subsection{Structura conversațiilor}
+
+Mesageria în MediLink este organizată ca un sistem de conversații directe (1-la-1) între utilizatori. Fiecare conversație este identificată printr-o pereche ordonată de ID-uri de utilizatori, stocată în tabelul \code{messages}. La accesarea paginii de mesagerie, frontend-ul interoghează lista de conversații active ale utilizatorului curent, afișând ultimul mesaj și numărul de mesaje necitite pentru fiecare.
+
+\subsection{Trimiterea și recepționarea mesajelor}
+
+Trimiterea unui mesaj urmează un flux dublu pentru fiabilitate:
+
+\begin{enumerate}
+  \item Mesajul este mai întâi \textbf{persistat în baza de date} prin POST la \code{/api/messages}, garantând că nu se pierde în cazul unei deconectări WebSocket;
+  \item \textbf{Simultan}, serverul trimite mesajul în timp real prin WebSocket destinatarului, dacă acesta este conectat;
+  \item Dacă destinatarul nu este conectat în momentul trimiterii, mesajul va fi livrat la reconectare, prin interogarea bazei de date.
+\end{enumerate}
+
+Această arhitectură hibridă (REST pentru persistență + WebSocket pentru livrare în timp real) garantează că niciun mesaj nu se pierde, indiferent de starea conexiunii destinatarului.
+
+\subsection{Indicatori de stare}
+
+Interfața de mesagerie afișează indicatori vizuali pentru: mesajele necitite (bold + badge numeric), ora trimiterii fiecărui mesaj (formatată relativ: „acum 5 minute", „ieri la 14:30") și starea de online/offline a interlocutorului, determinată pe baza prezenței conexiunii WebSocket active.
+
+\section{Fluxul de onboarding al utilizatorilor noi}
+
+\subsection{Pagina de onboarding}
+
+La prima autentificare, utilizatorii noi sunt redirecționați automat la pagina de \textbf{onboarding}, unde completează informațiile de profil obligatorii. Redirecționarea este gestionată de un guard Angular care verifică câmpul \code{profile\_completed} din profilul utilizatorului.
+
+Pagina de onboarding este adaptată în funcție de rol:
+
+\begin{itemize}
+  \item \textbf{Pacienți} --- completează: data nașterii, sexul, grupul sanguin, alergii cunoscute, boli cronice, contact de urgență și numărul de telefon;
+  \item \textbf{Medici} --- completează: specializarea medicală, titlul academic, numărul de telefon al cabinetului, programul de consultații și o scurtă biografie profesională;
+  \item \textbf{Asistenți medicali} --- completează informațiile de contact și departamentul.
+\end{itemize}
+
+\subsection{Validarea și salvarea datelor}
+
+Formularul de onboarding utilizează \textbf{Reactive Forms} Angular cu validatori pentru câmpurile obligatorii. La trimitere, datele sunt salvate printr-un singur apel PUT la \code{/api/me/profile}, care actualizează simultan tabelul \code{users} și tabelul de profil corespunzător rolului (\code{patients} sau \code{doctors}). La finalizarea cu succes, câmpul \code{profile\_completed} este setat la \code{true} și utilizatorul este redirecționat la dashboard-ul specific rolului.
+
+\section{Generarea raportului medical PDF}
+
+\subsection{Fluxul de generare}
+
+Raportul medical PDF este una dintre funcționalitățile distinctive ale MediLink, combinând inteligența artificială cu generarea documentelor profesionale. Fluxul de generare parcurge mai mulți pași:
+
+\begin{enumerate}
+  \item Medicul apasă butonul „Generează raport PDF" din fișa unui pacient;
+  \item Frontend-ul trimite o cerere POST la \code{/api/ai/report/{patient\_id}};
+  \item Backend-ul colectează toate datele pacientului: profil medical, ultimele 20 de înregistrări medicale, semnele vitale din ultimele 90 de zile și prescripțiile active;
+  \item Datele sunt trimise modelului Llama 3.3 70B prin API-ul Groq, cu un prompt structurat care solicită generarea unui raport narativ clinic complet;
+  \item Textul generat de AI este integrat într-un template HTML structurat pe secțiuni medicale standard;
+  \item \textbf{WeasyPrint} \cite{weasyprint2024} convertește documentul HTML+CSS în format PDF, cu antet și subsol pe fiecare pagină, numerotare pagini și stilizare profesională;
+  \item PDF-ul generat este returnat clientului ca fișier descărcabil cu header-ul \code{Content-Disposition: attachment}.
+\end{enumerate}
+
+\subsection{Structura raportului generat}
+
+Raportul medical PDF generat de MediLink este structurat în secțiuni clinice standard:
+
+\begin{itemize}
+  \item \textbf{Date de identificare} --- numele complet, data nașterii, CNP (mascat pentru confidențialitate), grupul sanguin;
+  \item \textbf{Sumar clinic} --- rezumatul stării de sănătate generat de AI pe baza istoricului complet;
+  \item \textbf{Diagnostice active și boli cronice} --- lista condițiilor medicale cunoscute cu data primei înregistrări;
+  \item \textbf{Evoluția semnelor vitale} --- tabel cu valorile înregistrate în ultimele 90 de zile și tendința (crescătoare/descrescătoare/stabilă);
+  \item \textbf{Medicația curentă} --- lista prescripțiilor active cu doze și instrucțiuni;
+  \item \textbf{Istoricul consultațiilor} --- ultimele 10 consultații cu diagnostic și tratament;
+  \item \textbf{Recomandări și plan de urmărire} --- recomandările generate de AI pe baza profilului de risc.
+\end{itemize}
+
+\section{Tabloul de bord administrativ}
+
+\subsection{Statistici globale ale platformei}
+
+Dashboard-ul administrativ oferă o vizualizare centralizată a activității platformei prin patru carduri de statistici: numărul total de utilizatori activi (defalcat pe roluri), numărul de programări din luna curentă, numărul de consultații finalizate și numărul de mesaje schimbate în ultimele 7 zile.
+
+Graficele incluse sunt:
+\begin{itemize}
+  \item \textbf{Evoluția înregistrărilor noi pe luni} --- grafic de tip bar chart cu numărul de utilizatori noi înregistrați în fiecare lună din ultimul an;
+  \item \textbf{Distribuția pe roluri} --- grafic donut cu proporția fiecărui tip de utilizator;
+  \item \textbf{Statusul programărilor} --- grafic donut cu proporția programărilor în fiecare status (pending/confirmed/completed/cancelled).
+\end{itemize}
+
+\subsection{Gestionarea utilizatorilor}
+
+Tabelul de utilizatori din dashboard-ul admin oferă administratorului vizibilitate completă asupra tuturor conturilor din platformă. Funcționalitățile disponibile includ:
+
+\begin{itemize}
+  \item \textbf{Filtrare multi-criteriu} --- după text (nume, email), rol și interval de dată la înregistrare;
+  \item \textbf{Activare/dezactivare conturi} --- un cont dezactivat nu mai poate efectua autentificarea, dar datele rămân intacte în baza de date;
+  \item \textbf{Adăugare utilizator manual} --- administratorul poate crea conturi noi fără ca utilizatorul să parcurgă fluxul de înregistrare, util pentru onboarding rapid al personalului medical;
+  \item \textbf{Vizualizarea jurnalului de audit} --- acțiunile recente ale unui utilizator specific pot fi filtrate direct din profilul acestuia.
+\end{itemize}
+
+\subsection{Jurnalul de audit}
+
+Tab-ul de audit log din dashboard-ul administrativ afișează un tabel paginat cu toate acțiunile importante înregistrate în platformă, cu posibilitate de filtrare după utilizator, tip de acțiune și interval de timp. Fiecare înregistrare conține: timestamp-ul exact, utilizatorul responsabil (cu email), acțiunea efectuată (ex: \code{LOGIN\_SUCCESS}, \code{MEDICAL\_RECORD\_CREATED}, \code{GDPR\_EXPORT}), resursa afectată (ID-ul entității) și adresa IP a cererii.
+
+Jurnalul de audit este esențial atât pentru investigarea incidentelor de securitate, cât și pentru demonstrarea conformității GDPR, furnizând dovezi că accesul la datele medicale a fost efectuat exclusiv de persoane autorizate.

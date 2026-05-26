@@ -422,3 +422,63 @@ Principalele drepturi ale persoanei vizate relevante pentru MediLink:
 \end{itemize}
 
 MediLink implementează toate aceste cerințe prin funcționalități tehnice dedicate, descrise în detaliu în Capitolul 3.
+
+\section{Mediul de dezvoltare și instrumente utilizate}
+
+\subsection{Editor de cod și extensii}
+
+Dezvoltarea MediLink a fost realizată în \textbf{Visual Studio Code} (VSCode), editorul de cod open-source dezvoltat de Microsoft, ales pentru suportul nativ TypeScript, ecosistemul bogat de extensii și integrarea cu Git. Extensiile utilizate în cadrul proiectului includ:
+
+\begin{itemize}
+  \item \textbf{Angular Language Service} --- completare automată și navigare în template-urile Angular, detectarea erorilor în fișierele HTML înainte de compilare;
+  \item \textbf{Python} (Microsoft) --- suport pentru tipuri, debugging integrat și formatare automată cu Black;
+  \item \textbf{Pylance} --- server de analiză statică Python cu inferență de tipuri bazată pe Pyright;
+  \item \textbf{ESLint} --- analiză statică a codului TypeScript, detectarea problemelor de stilizare și a anti-pattern-urilor;
+  \item \textbf{Docker} --- vizualizarea și gestionarea containerelor direct din editor;
+  \item \textbf{GitLens} --- vizualizarea istoricului Git per linie de cod, blame annotations și comparații între versiuni.
+\end{itemize}
+
+\subsection{Gestionarea versiunilor cu Git}
+
+Codul sursă al proiectului MediLink este versionat cu \textbf{Git} și stocat pe GitHub. Strategia de branching adoptată urmează un flux simplificat: ramura \code{main} conține întotdeauna codul stabil și funcțional, iar funcționalitățile noi sunt dezvoltate pe ramuri separate și integrate prin pull requests. Fiecare commit respectă convenția \textit{Conventional Commits}: prefixul \code{feat:} pentru funcționalități noi, \code{fix:} pentru corecții de bug-uri și \code{docs:} pentru documentație.
+
+\subsection{Instrumente de testare și debugging}
+
+\textbf{Swagger UI} --- documentația interactivă generată automat de FastAPI la adresa \code{/api/docs} a reprezentat principalul instrument de testare manuală a API-ului în fazele de dezvoltare. Fiecare endpoint poate fi testat direct din browser, cu completarea automată a schemelor de request și vizualizarea răspunsurilor JSON.
+
+\textbf{pgAdmin 4} --- interfața grafică pentru PostgreSQL a permis inspecția directă a bazei de date în timpul dezvoltării: vizualizarea structurii tabelelor, executarea interogărilor SQL ad-hoc și verificarea datelor criptate vs. decriptate.
+
+\textbf{Redis CLI} --- interfața în linie de comandă a Redis a fost utilizată pentru diagnosticarea problemelor cu blacklist-ul de token-uri și verificarea TTL-urilor configurate.
+
+\textbf{Angular DevTools} --- extensia de browser dedicată Angular a permis inspecția arborelui de componente, vizualizarea stării injectoarelor de dependențe și profilerea ciclurilor de detectare a schimbărilor pentru optimizarea performanței.
+
+\subsection{Gestionarea dependențelor}
+
+Backend-ul Python utilizează \textbf{pip} cu un fișier \code{requirements.txt} versionat, care fixează versiunile exacte ale tuturor dependențelor pentru reproductibilitate. Principalele dependențe includ: \code{fastapi}, \code{uvicorn[standard]}, \code{sqlalchemy}, \code{alembic}, \code{psycopg2-binary}, \code{python-jose[cryptography]}, \code{passlib[bcrypt]}, \code{groq}, \code{weasyprint} și \code{apscheduler}.
+
+Frontendului Angular gestionează dependențele prin \textbf{npm} (\textit{Node Package Manager}), cu fișierele \code{package.json} și \code{package-lock.json} versionare pentru reproducere exactă a mediului. Principalele dependențe includ: \code{@angular/core} (v19), \code{@angular/material}, \code{ng-apexcharts}, \code{angular-tabler-icons} și \code{moment} (pentru manipularea datelor calendaristice).
+
+\section{Arhitectura generală a platformei MediLink}
+
+\subsection{Fluxul complet al unei cereri HTTP}
+
+Înțelegerea fluxului complet al unei cereri în MediLink este esențială pentru a aprecia deciziile arhitecturale luate. Atunci când un utilizator accesează o pagină sau efectuează o acțiune în interfată, parcursul cererii este:
+
+\begin{enumerate}
+  \item \textbf{Browserul} trimite o cerere HTTP/HTTPS către adresa serverului (portul 80);
+  \item \textbf{Nginx} primește cererea și, pe baza URI-ului, decide rutarea: cererile cu prefix \code{/api/} sunt transmise prin proxy către containerul backend (portul 8000), iar celelalte sunt servite din fișierele statice Angular;
+  \item \textbf{FastAPI (Uvicorn)} primește cererea API și o rutează la funcția handler corespunzătoare prin sistemul de rutare intern;
+  \item \textbf{Middleware-urile} sunt executate în ordine: autentificarea JWT verifică token-ul, middleware-ul de logging înregistrează cererea, CORS validează originea;
+  \item \textbf{Handler-ul endpoint-ului} execută logica de business: interogează baza de date prin SQLAlchemy, apelează servicii externe (Groq API) dacă este necesar și construiește răspunsul;
+  \item \textbf{SQLAlchemy} generează și execută interogările SQL pe instanța PostgreSQL din containerul \code{db};
+  \item Răspunsul JSON parcurge drumul invers: handler → FastAPI → Nginx → browser;
+  \item \textbf{Angular} primește răspunsul JSON, actualizează starea componentei și re-renderizează interfața.
+\end{enumerate}
+
+\subsection{Separarea mediilor development și producție}
+
+MediLink este configurat să funcționeze în două medii distincte, controlate prin variabile de mediu:
+
+\textbf{Mediul de development} (\code{DEBUG=true}) activează: reîncărcarea automată a serverului la modificarea codului (\textit{hot reload}), logging verbose în consolă, documentația Swagger UI accesibilă public și CORS permisiv pentru portul de development Angular (4200).
+
+\textbf{Mediul de producție} (\code{DEBUG=false}) dezactivează documentația Swagger UI, activează CORS restrictiv (doar domeniul configurat), activează HTTPS prin Nginx și setează nivelul de logging la \code{WARNING} pentru a reduce zgomotul în jurnale.
